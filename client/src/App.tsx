@@ -9,6 +9,8 @@ import TodayPage from "@/pages/today";
 import RoutinesPage from "@/pages/routines";
 import DashboardPage from "@/pages/dashboard";
 import SettingsPage from "@/pages/settings";
+import PrivacyPage from "@/pages/privacy";
+import TermsPage from "@/pages/terms";
 import NotFound from "@/pages/not-found";
 
 function Router() {
@@ -18,6 +20,8 @@ function Router() {
       <Route path="/routines" component={RoutinesPage} />
       <Route path="/dashboard" component={DashboardPage} />
       <Route path="/settings" component={SettingsPage} />
+      <Route path="/privacy" component={PrivacyPage} />
+      <Route path="/terms" component={TermsPage} />
       <Route component={NotFound} />
     </Switch>
   );
