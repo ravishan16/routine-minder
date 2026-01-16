@@ -12,6 +12,13 @@ import type {
 } from "@shared/schema";
 import { MILESTONES, type Milestone } from "@shared/schema";
 
+export interface ExportData {
+  routines: Routine[];
+  completions: Completion[];
+  settings: Settings;
+  exportedAt: string;
+}
+
 export interface IStorage {
   // Routines
   getRoutines(): Promise<Routine[]>;
@@ -24,6 +31,7 @@ export interface IStorage {
   getCompletionsForDate(date: string): Promise<Completion[]>;
   getCompletionsByRoutine(routineId: string): Promise<Completion[]>;
   upsertCompletion(completion: InsertCompletion): Promise<Completion>;
+  getAllCompletions(): Promise<Completion[]>;
   
   // Daily view
   getRoutinesWithStatus(date: string): Promise<RoutineWithStatus[]>;
@@ -35,6 +43,9 @@ export interface IStorage {
   // Settings
   getSettings(): Promise<Settings>;
   updateSettings(settings: UpdateSettings): Promise<Settings>;
+  
+  // Export
+  exportAllData(): Promise<ExportData>;
 }
 
 export class MemStorage implements IStorage {
@@ -347,6 +358,11 @@ export class MemStorage implements IStorage {
         startDate.setDate(startDate.getDate() - 29);
         periodLabel = "Last 30 Days";
         break;
+      case "1y":
+        startDate = new Date(today);
+        startDate.setFullYear(startDate.getFullYear() - 1);
+        periodLabel = "Last 1 Year";
+        break;
       case "ytd":
         startDate = new Date(today.getFullYear(), 0, 1);
         periodLabel = "Year to Date";
@@ -386,6 +402,23 @@ export class MemStorage implements IStorage {
   async updateSettings(updates: UpdateSettings): Promise<Settings> {
     this.settings = { ...this.settings, ...updates };
     return this.settings;
+  }
+
+  async getAllCompletions(): Promise<Completion[]> {
+    return Array.from(this.completions.values());
+  }
+
+  async exportAllData(): Promise<ExportData> {
+    const routines = await this.getRoutines();
+    const completions = await this.getAllCompletions();
+    const settings = await this.getSettings();
+    
+    return {
+      routines,
+      completions,
+      settings,
+      exportedAt: new Date().toISOString(),
+    };
   }
 }
 

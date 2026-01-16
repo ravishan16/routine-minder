@@ -1,6 +1,6 @@
 import type { Express } from "express";
 import { createServer, type Server } from "http";
-import { storage } from "./storage";
+import { storage, type ExportData } from "./storage";
 import { insertRoutineSchema, insertCompletionSchema, updateSettingsSchema } from "@shared/schema";
 
 export async function registerRoutes(
@@ -162,6 +162,50 @@ export async function registerRoutes(
       res.json(settings);
     } catch (error) {
       res.status(500).json({ error: "Failed to update settings" });
+    }
+  });
+
+  // === EXPORT ===
+
+  // Export all data as JSON
+  app.get("/api/export/json", async (req, res) => {
+    try {
+      const data = await storage.exportAllData();
+      res.setHeader("Content-Type", "application/json");
+      res.setHeader("Content-Disposition", `attachment; filename=routine-minder-export-${new Date().toISOString().split('T')[0]}.json`);
+      res.json(data);
+    } catch (error) {
+      res.status(500).json({ error: "Failed to export data" });
+    }
+  });
+
+  // Export all data as CSV
+  app.get("/api/export/csv", async (req, res) => {
+    try {
+      const data = await storage.exportAllData();
+      
+      // Build CSV content
+      let csv = "Type,Date,Routine Name,Time Category,Completed\n";
+      
+      // Add completions with routine names
+      const routineMap = new Map(data.routines.map(r => [r.id, r.name]));
+      
+      for (const completion of data.completions) {
+        const routineName = routineMap.get(completion.routineId) || "Unknown";
+        csv += `"Completion","${completion.date}","${routineName}","${completion.timeCategory}","${completion.completed}"\n`;
+      }
+      
+      // Add routines summary
+      csv += "\nRoutine ID,Routine Name,Time Categories,Active,Notifications\n";
+      for (const routine of data.routines) {
+        csv += `"${routine.id}","${routine.name}","${routine.timeCategories.join(', ')}","${routine.isActive}","${routine.notificationEnabled}"\n`;
+      }
+      
+      res.setHeader("Content-Type", "text/csv");
+      res.setHeader("Content-Disposition", `attachment; filename=routine-minder-export-${new Date().toISOString().split('T')[0]}.csv`);
+      res.send(csv);
+    } catch (error) {
+      res.status(500).json({ error: "Failed to export data" });
     }
   });
 
