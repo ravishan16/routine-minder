@@ -10,13 +10,19 @@ export const TimeCategory = {
 
 export type TimeCategoryType = typeof TimeCategory[keyof typeof TimeCategory];
 
-// Routine type
+// Milestone definitions
+export const MILESTONES = [7, 21, 30, 50, 100, 365] as const;
+export type Milestone = typeof MILESTONES[number];
+
+// Routine schema
 export const routineSchema = z.object({
   id: z.string(),
-  name: z.string().min(1),
-  timeCategories: z.array(z.enum(["AM", "NOON", "PM", "ALL"])),
+  name: z.string().min(1, "Name is required"),
+  timeCategories: z.array(z.enum(["AM", "NOON", "PM", "ALL"])).min(1, "Select at least one time"),
   isActive: z.boolean().default(true),
   sortOrder: z.number().default(0),
+  notificationEnabled: z.boolean().default(false),
+  notificationTime: z.string().optional(),
 });
 
 export const insertRoutineSchema = routineSchema.omit({ id: true });
@@ -24,11 +30,11 @@ export const insertRoutineSchema = routineSchema.omit({ id: true });
 export type Routine = z.infer<typeof routineSchema>;
 export type InsertRoutine = z.infer<typeof insertRoutineSchema>;
 
-// Completion type - tracks when routines are marked complete
+// Completion schema
 export const completionSchema = z.object({
   id: z.string(),
   routineId: z.string(),
-  date: z.string(), // YYYY-MM-DD format
+  date: z.string(),
   timeCategory: z.enum(["AM", "NOON", "PM", "ALL"]),
   completed: z.boolean().default(false),
 });
@@ -38,7 +44,7 @@ export const insertCompletionSchema = completionSchema.omit({ id: true });
 export type Completion = z.infer<typeof completionSchema>;
 export type InsertCompletion = z.infer<typeof insertCompletionSchema>;
 
-// Settings type
+// Settings schema
 export const settingsSchema = z.object({
   id: z.string(),
   notificationsEnabled: z.boolean().default(false),
@@ -48,9 +54,11 @@ export const settingsSchema = z.object({
 });
 
 export const insertSettingsSchema = settingsSchema.omit({ id: true });
+export const updateSettingsSchema = insertSettingsSchema.partial();
 
 export type Settings = z.infer<typeof settingsSchema>;
 export type InsertSettings = z.infer<typeof insertSettingsSchema>;
+export type UpdateSettings = z.infer<typeof updateSettingsSchema>;
 
 // Dashboard stats type
 export type DashboardStats = {
@@ -58,6 +66,18 @@ export type DashboardStats = {
   longestStreak: number;
   completedCount: number;
   totalTasks: number;
+  completionRate: number;
+  periodLabel: string;
+};
+
+// Routine stats with streak and milestones
+export type RoutineStats = {
+  routineId: string;
+  routineName: string;
+  currentStreak: number;
+  longestStreak: number;
+  nextMilestone: Milestone | null;
+  achievedMilestones: Milestone[];
   completionRate: number;
 };
 
