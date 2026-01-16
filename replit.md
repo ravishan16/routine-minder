@@ -42,11 +42,23 @@ Routine Minder is a clean, minimalist habit tracking app inspired by Habitica an
 - Optional notification settings per routine
 
 ### Dashboard
-- Time range filters (7 days, 30 days, YTD, All Time)
+- Time range filters (7 days, 30 days, 1 Year, YTD, All Time)
 - Stats: Current streak, longest streak, completed count, total tasks
 - Completion rate with motivational messages
 - Per-routine streak tracking with milestone badges
 - Sharing functionality for stats and individual routines
+
+### Data Export
+- Download as CSV file
+- Download as JSON file
+- Copy to clipboard for Google Sheets import
+- Export JSON for iCloud Drive storage
+
+### Privacy & Legal
+- Privacy Policy page (no tracking, local storage only)
+- Terms of Service page with clear data disclaimer
+- Full user control over data
+- No data collection or external tracking
 
 ### Milestones
 - 7 days (1 Week)
@@ -81,12 +93,16 @@ Routine Minder is a clean, minimalist habit tracking app inspired by Habitica an
 - `GET /api/completions?date=YYYY-MM-DD` - Get completions for date
 
 ### Dashboard
-- `GET /api/dashboard?param0=7d|30d|ytd|all` - Get dashboard stats
-- `GET /api/dashboard/routines?param0=7d|30d|ytd|all` - Get per-routine stats
+- `GET /api/dashboard?param0=7d|30d|1y|ytd|all` - Get dashboard stats
+- `GET /api/dashboard/routines?param0=7d|30d|1y|ytd|all` - Get per-routine stats
 
 ### Settings
 - `GET /api/settings` - Get settings
 - `PUT /api/settings` - Update settings
+
+### Export
+- `GET /api/export/json` - Export all data as JSON
+- `GET /api/export/csv` - Export all data as CSV
 
 ## Development
 
