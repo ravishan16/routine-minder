@@ -16,7 +16,7 @@ import { TimeCategoryBadge } from "@/components/time-category-badge";
 import { useTheme } from "@/components/theme-provider";
 import { useToast } from "@/hooks/use-toast";
 import { queryClient } from "@/lib/queryClient";
-import { routinesApi } from "@/lib/api";
+import { routinesApi } from "@/lib/storage";
 import { CreateRoutineSchema, type Routine, type CreateRoutineInput } from "@/lib/schema";
 
 const timeCategories = [

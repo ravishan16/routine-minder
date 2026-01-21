@@ -1,0 +1,8 @@
+name = "routine-minder-api"
+main = "src/index.ts"
+compatibility_date = "2024-01-01"
+
+[[d1_databases]]
+binding = "DB"
+database_name = "routine-minder-db"
+database_id = "79cc58f8-e67d-42b3-8b52-312f3ad0a874"

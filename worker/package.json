@@ -1,0 +1,20 @@
+{
+  "name": "routine-minder-api",
+  "version": "1.0.0",
+  "private": true,
+  "scripts": {
+    "dev": "wrangler dev",
+    "deploy": "wrangler deploy",
+    "db:create": "wrangler d1 create routine-minder-db",
+    "db:migrate": "wrangler d1 execute routine-minder-db --file=./migrations/001_init.sql",
+    "db:migrate:local": "wrangler d1 execute routine-minder-db --local --file=./migrations/001_init.sql"
+  },
+  "dependencies": {
+    "hono": "^4.0.0"
+  },
+  "devDependencies": {
+    "@cloudflare/workers-types": "^4.20240117.0",
+    "typescript": "^5.3.0",
+    "wrangler": "^3.0.0"
+  }
+}

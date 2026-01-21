@@ -4,14 +4,14 @@ import { z } from "zod";
 export const TimeCategory = z.enum(["AM", "NOON", "PM", "ALL"]);
 export type TimeCategory = z.infer<typeof TimeCategory>;
 
-// Routine schema
+// Routine schema (simplified)
 export const RoutineSchema = z.object({
   id: z.string(),
   name: z.string().min(1, "Name is required"),
   timeCategories: z.array(TimeCategory).min(1, "Select at least one time"),
   isActive: z.boolean(),
-  sortOrder: z.number(),
-  notificationEnabled: z.boolean(),
+  sortOrder: z.number().optional(),
+  notificationEnabled: z.boolean().optional(),
   notificationTime: z.string().nullable().optional(),
   createdAt: z.string().optional(),
 });
@@ -19,62 +19,47 @@ export const RoutineSchema = z.object({
 export type Routine = z.infer<typeof RoutineSchema>;
 
 // Routine with completion status for daily view
-export const DailyRoutineSchema = RoutineSchema.extend({
-  completions: z.array(
-    z.object({
-      timeCategory: TimeCategory,
-      completed: z.boolean(),
-    })
-  ),
-});
-
-export type DailyRoutine = z.infer<typeof DailyRoutineSchema>;
+export type DailyRoutine = Routine & {
+  completedCategories: string[];
+  isFullyCompleted: boolean;
+};
 
 // Completion record
 export const CompletionSchema = z.object({
   id: z.string(),
   routineId: z.string(),
   date: z.string(),
-  timeCategory: TimeCategory,
-  completed: z.boolean(),
+  timeCategory: z.string(),
   completedAt: z.string().optional(),
 });
 
 export type Completion = z.infer<typeof CompletionSchema>;
 
-// Settings
-export const SettingsSchema = z.object({
-  notificationsEnabled: z.boolean(),
-  amNotificationTime: z.string(),
-  noonNotificationTime: z.string(),
-  pmNotificationTime: z.string(),
-});
-
-export type Settings = z.infer<typeof SettingsSchema>;
+// Settings (simplified)
+export type Settings = {
+  notificationsEnabled?: boolean;
+  theme?: string;
+};
 
 // Dashboard stats
-export const DashboardSchema = z.object({
-  completionRate: z.number(),
-  totalCompleted: z.number(),
-  totalExpected: z.number(),
-  currentStreak: z.number(),
-  longestStreak: z.number(),
-  routineCount: z.number(),
-});
-
-export type Dashboard = z.infer<typeof DashboardSchema>;
+export type Dashboard = {
+  totalRoutines: number;
+  completedToday: number;
+  totalToday: number;
+  currentStreak: number;
+  bestStreak: number;
+  weeklyCompletionRate: number;
+};
 
 // Routine stats for dashboard
-export const RoutineStatsSchema = z.object({
-  routineId: z.string(),
-  routineName: z.string(),
-  currentStreak: z.number(),
-  longestStreak: z.number(),
-  completionRate: z.number(),
-  achievedMilestones: z.array(z.number()),
-});
-
-export type RoutineStats = z.infer<typeof RoutineStatsSchema>;
+export type RoutineStats = {
+  routineId: string;
+  routineName: string;
+  currentStreak: number;
+  longestStreak: number;
+  completionRate: number;
+  achievedMilestones: number[];
+};
 
 // Milestones
 export const MILESTONES = [7, 21, 30, 50, 100, 365] as const;

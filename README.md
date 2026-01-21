@@ -1,122 +1,108 @@
 # Routine Minder
 
-A simple, privacy-focused daily habit tracker PWA with Google Sheets as the backend.
+A simple, privacy-focused daily habit tracker PWA with offline-first architecture.
 
 ![Routine Minder](https://img.shields.io/badge/PWA-Ready-5B7C99?style=flat-square)
 ![License](https://img.shields.io/badge/License-MIT-green?style=flat-square)
 
 ## Features
 
-- ✅ **Daily Routine Tracking** - Check off routines by time of day (AM/Noon/PM)
+- ✅ **Daily Routine Tracking** - Check off routines by time of day (AM/Noon/PM/All Day)
+- 🚀 **Onboarding Flow** - Quick start with preset routines (Hydration, Vitamins, Journaling, etc.)
 - 🔥 **Streak Tracking** - Build momentum with daily streaks
 - 📊 **Dashboard** - View completion rates and progress over time
 - 🌙 **Dark Mode** - Easy on the eyes
 - 📱 **PWA** - Install on iPhone/Android like a native app
-- 🔐 **Privacy-First** - Your data lives in YOUR Google Sheet
-- 👥 **Multi-User** - Each Google account has isolated data
+- 📴 **Offline-First** - Works without internet, syncs when connected
+- 🔐 **Privacy-First** - Device-based authentication, no account required
 
 ## Architecture
 
 ```
 ┌─────────────────────┐     ┌─────────────────────────────┐
 │                     │     │                             │
-│   React PWA         │────▶│   Google Apps Script        │
-│   (Cloudflare)      │     │   (Web App)                 │
+│   React PWA         │────▶│   Cloudflare Worker         │
+│   (Cloudflare Pages)│     │   (Hono API)                │
 │                     │◀────│                             │
 └─────────────────────┘     └──────────────┬──────────────┘
-                                           │
-                                           ▼
-                            ┌─────────────────────────────┐
-                            │                             │
-                            │   User's Google Sheet       │
-                            │   (Google Drive)            │
-                            │                             │
-                            └─────────────────────────────┘
+        │                                  │
+        │ localStorage                     │
+        │ (offline-first)                  ▼
+        ▼                   ┌─────────────────────────────┐
+┌─────────────────────┐     │                             │
+│   Service Worker    │     │   Cloudflare D1             │
+│   (Workbox)         │     │   (SQLite Database)         │
+└─────────────────────┘     └─────────────────────────────┘
 ```
 
 ## Quick Start
 
-### 1. Deploy Google Apps Script
+### Prerequisites
 
-1. Go to [Google Apps Script](https://script.google.com/home/start)
-2. Create a new project
-3. Copy the contents of `google-apps-script/Code.gs` into the script editor
-4. Click **Deploy** → **New deployment**
-5. Select **Web app** as the type
-6. Configure:
-   - Execute as: **User accessing the web app**
-   - Who has access: **Anyone with Google account**
-7. Click **Deploy** and authorize the app
-8. Copy the Web App URL (looks like `https://script.google.com/macros/s/.../exec`)
+- Node.js 18+
+- Cloudflare account (free tier works)
+- Wrangler CLI (`npm install -g wrangler`)
 
-### 2. Deploy to Cloudflare Pages (Automated with GitHub Actions)
-
-The project includes GitHub Actions for automatic deployment to Cloudflare Pages.
-
-#### Step 1: Get Cloudflare Credentials
-
-1. Go to [Cloudflare Dashboard](https://dash.cloudflare.com/)
-2. Click your profile icon → **My Profile** → **API Tokens**
-3. Click **Create Token**
-4. Use the **Edit Cloudflare Workers** template, or create custom token with:
-   - `Account.Cloudflare Pages` - Edit
-   - `Account.Account Settings` - Read
-   - `Zone.Zone` - Read (optional, for custom domains)
-5. Copy the API Token
-6. Note your **Account ID** (found on the right sidebar of Workers & Pages overview)
-
-#### Step 2: Add Secrets to GitHub
-
-1. Go to your GitHub repository → **Settings** → **Secrets and variables** → **Actions**
-2. Add these repository secrets:
-   - `CLOUDFLARE_API_TOKEN` - Your API token from step 1
-   - `CLOUDFLARE_ACCOUNT_ID` - Your Cloudflare account ID
-
-#### Step 3: Push to Deploy
+### 1. Clone & Install
 
 ```bash
-git add .
-git commit -m "Initial deployment"
-git push origin main
+git clone https://github.com/ravishan16/routine-minder.git
+cd routine-minder
+npm install
 ```
 
-The GitHub Action will automatically:
-- Build the PWA and deploy to `routine-minder.ravishankars.com`
-
-
-#### Manual Deployment (Alternative)
+### 2. Set Up Cloudflare D1 Database
 
 ```bash
-# Install dependencies
-npm install
+cd worker
 
-# Build the app
+# Login to Cloudflare
+wrangler login
+
+# Create the D1 database
+wrangler d1 create routine-minder-db
+
+# Copy the database_id from output and update worker/wrangler.toml
+# Replace "placeholder" with your actual database ID
+
+# Run the migration
+wrangler d1 execute routine-minder-db --file=./migrations/001_init.sql
+```
+
+### 3. Deploy the Worker API
+
+```bash
+cd worker
+wrangler deploy
+```
+
+Note the deployed URL (e.g., `https://routine-minder-api.your-subdomain.workers.dev`)
+
+### 4. Configure & Deploy the Frontend
+
+```bash
+# Back to root
+cd ..
+
+# Update API URL in client/src/lib/storage.ts if needed
+# Default: https://routine-minder-api.ravishankars.workers.dev
+
+# Build and deploy to Cloudflare Pages
 npm run build
-
-# Deploy with Wrangler CLI
 npx wrangler pages deploy dist --project-name=routine-minder
 ```
 
-### 3. Configure Custom Domains (Optional)
+### Automated Deployment (GitHub Actions)
 
-After the first deployment succeeds:
+The project includes GitHub Actions for automatic deployment:
 
-1. Go to [Cloudflare Pages](https://dash.cloudflare.com/?to=/:account/pages)
-2. Select your project (`routine-minder`)
-3. Go to **Custom domains** tab
-4. Add your custom domain (e.g., `routines.yourdomain.com`)
+1. Add these secrets to your GitHub repository:
+   - `CLOUDFLARE_API_TOKEN` - API token with Workers/Pages permissions
+   - `CLOUDFLARE_ACCOUNT_ID` - Your Cloudflare account ID
 
-### 4. Deploy the Landing Page
-
-The landing page is automatically deployed by GitHub Actions to a separate project.
-Update the app URL in `landing/index.html` to point to your PWA URL before pushing.
-
-### 4. Use the App
-
-1. Open your deployed PWA URL
-2. Paste your Google Apps Script Web App URL
-3. Click **Connect & Start**
-4. Your data is now stored in a Google Sheet called "Routine Minder Data" in your Drive!
+2. Push to `main` branch - GitHub Actions will:
+   - Deploy the Worker API
+   - Build and deploy the PWA to Cloudflare Pages
 
 ## Development
 
@@ -124,8 +110,12 @@ Update the app URL in `landing/index.html` to point to your PWA URL before pushi
 # Install dependencies
 npm install
 
-# Start development server
+# Start development server (frontend)
 npm run dev
+
+# In another terminal, start worker locally
+cd worker
+wrangler dev
 
 # Type check
 npm run check
@@ -137,15 +127,20 @@ npm run build
 npm run preview
 ```
 
-## Environment Variables
+### Worker Development
 
-Create a `.env` file for optional Google Sign-In:
+```bash
+cd worker
 
-```env
-VITE_GOOGLE_CLIENT_ID=your-google-oauth-client-id
+# Run locally with D1 simulator
+wrangler dev
+
+# Run local migration
+wrangler d1 execute routine-minder-db --local --file=./migrations/001_init.sql
+
+# Deploy to production
+wrangler deploy
 ```
-
-> Note: Google Sign-In is optional. The app works without it by connecting directly to your Apps Script URL.
 
 ## Project Structure
 
@@ -153,91 +148,131 @@ VITE_GOOGLE_CLIENT_ID=your-google-oauth-client-id
 routine-minder/
 ├── client/                  # React PWA
 │   ├── public/              # Static assets & PWA icons
+│   │   └── icons/           # SVG app icons
 │   └── src/
 │       ├── components/      # UI components
+│       │   ├── ui/          # shadcn/ui primitives
+│       │   ├── onboarding.tsx
+│       │   ├── error-boundary.tsx
+│       │   └── ...
 │       ├── hooks/           # React hooks
-│       ├── lib/             # API client, auth, utilities
+│       ├── lib/             # Core logic
+│       │   ├── storage.ts   # localStorage + API sync
+│       │   ├── schema.ts    # TypeScript types
+│       │   └── utils.ts     # Utilities
 │       └── pages/           # Page components
-├── google-apps-script/      # Google Apps Script backend
-│   ├── Code.gs              # Main script
-│   └── appsscript.json      # Script configuration
-├── landing/                 # Landing page for Cloudflare
-│   └── index.html           # Install instructions & QR code
+│           ├── today.tsx    # Main daily view
+│           ├── dashboard.tsx
+│           ├── routines.tsx
+│           └── settings.tsx
+├── worker/                  # Cloudflare Worker API
+│   ├── src/
+│   │   └── index.ts         # Hono API routes
+│   ├── migrations/
+│   │   └── 001_init.sql     # D1 schema
+│   ├── wrangler.toml        # Worker config
+│   └── package.json
 ├── package.json
 ├── vite.config.ts           # Vite + PWA configuration
 └── README.md
 ```
 
-## How Multi-User Works
+## API Endpoints
 
-Each user who connects to the Apps Script creates their own Google Sheet:
+| Method | Endpoint | Description |
+|--------|----------|-------------|
+| POST | `/api/auth/device` | Register device & get user ID |
+| GET | `/api/routines` | List all routines |
+| POST | `/api/routines` | Create a routine |
+| PUT | `/api/routines/:id` | Update a routine |
+| DELETE | `/api/routines/:id` | Delete a routine |
+| GET | `/api/completions` | Get completions (with ?date or ?days) |
+| POST | `/api/completions/toggle` | Toggle completion status |
+| GET | `/api/dashboard` | Get dashboard statistics |
+| POST | `/api/sync` | Bulk sync from localStorage |
 
-1. User opens PWA and pastes their Apps Script URL
-2. Apps Script checks if "Routine Minder Data" exists in user's Drive
-3. If not, it creates the sheet with default structure
-4. All CRUD operations go to that user's specific sheet
+## How It Works
 
-**Privacy:** Each user's data is completely isolated in their own Google Drive. You (the developer) have no access to user data.
+### Offline-First Storage
 
-## API Endpoints (Apps Script)
+1. **localStorage is the source of truth** - All reads come from localStorage first
+2. **Background sync** - Changes are synced to D1 when online
+3. **Conflict resolution** - Last-write-wins for simplicity
+4. **Service Worker** - Caches static assets for offline use
 
-| Action | Description |
-|--------|-------------|
-| `ping` | Check connection & get user email |
-| `getRoutines` | List all active routines |
-| `getDailyRoutines` | Get routines with completion status for a date |
-| `createRoutine` | Create a new routine |
-| `updateRoutine` | Update a routine |
-| `deleteRoutine` | Soft-delete a routine |
-| `toggleCompletion` | Toggle completion status |
-| `getCompletions` | Get completions for a date |
-| `getDashboard` | Get dashboard statistics |
-| `getSettings` | Get user settings |
-| `updateSettings` | Update user settings |
-| `exportData` | Export all data as JSON |
+### Device-Based Authentication
+
+1. First visit generates a unique device ID (UUID)
+2. Device ID is sent to API to create/retrieve user
+3. User ID stored in localStorage for subsequent requests
+4. No passwords, no accounts - just your device
+
+### Onboarding Flow
+
+New users are presented with preset routines:
+- 💧 Hydration (AM/Noon/PM)
+- 💊 Vitamins (AM/PM)
+- 📖 Journaling (PM)
+- 🏋️ Exercise (AM)
+- 🧘 Meditation (AM/PM)
+- 🎵 Music Practice (PM)
+
+Users can select which to start with or skip and add their own.
+
+## Tech Stack
+
+| Layer | Technology |
+|-------|------------|
+| Frontend | React 18, TypeScript, Vite 7 |
+| Styling | Tailwind CSS, shadcn/ui |
+| State | TanStack React Query |
+| Routing | Wouter |
+| PWA | vite-plugin-pwa (Workbox) |
+| API | Cloudflare Workers, Hono |
+| Database | Cloudflare D1 (SQLite) |
+| Hosting | Cloudflare Pages |
 
 ## Customization
 
 ### App Branding
 
 Update these files:
-- `vite.config.ts` - PWA manifest (name, colors, icons)
-- `client/public/icons/` - App icons (generate from SVG)
-- `landing/index.html` - Landing page branding
+- `vite.config.ts` - PWA manifest (name, colors)
+- `client/public/icons/icon.svg` - App icon
+- `client/index.html` - Title and meta tags
 
-### Default Routines
+### Preset Routines
 
-Edit `google-apps-script/Code.gs` in the `getOrCreateSpreadsheet()` function to change the default routines for new users.
+Edit `client/src/components/onboarding.tsx` to customize the preset routines offered during onboarding.
 
-## Tech Stack
+### API URL
 
-| Layer | Technology |
-|-------|------------|
-| Frontend | React 18, TypeScript, Vite |
-| Styling | Tailwind CSS, shadcn/ui |
-| State | TanStack React Query |
-| Routing | Wouter |
-| PWA | vite-plugin-pwa |
-| Backend | Google Apps Script |
-| Database | Google Sheets |
-| Hosting | Cloudflare Pages |
+Update the default API URL in `client/src/lib/storage.ts`:
+
+```typescript
+const API_URL = import.meta.env.VITE_API_URL || "https://your-worker.workers.dev";
+```
 
 ## Troubleshooting
 
 ### "Connection Failed" error
-- Ensure your Apps Script is deployed as a Web App
-- Check that access is set to "Anyone with Google account"
-- Try redeploying the Apps Script
+- Check that the Worker is deployed and running
+- Verify the API URL in storage.ts matches your Worker URL
+- Check browser console for CORS errors
 
-### Data not saving
-- Check browser console for errors
-- Verify the Apps Script URL is correct
-- Ensure you're signed into a Google account
+### Data not syncing
+- Check if you're online (offline mode uses localStorage only)
+- Verify the Worker has proper D1 bindings
+- Check Worker logs: `wrangler tail`
 
 ### PWA not installing
-- Make sure you're using HTTPS
+- Ensure you're using HTTPS (Cloudflare Pages provides this)
 - iOS: Must use Safari browser
 - Android: Must use Chrome browser
+
+### D1 database issues
+- Run migrations: `wrangler d1 execute routine-minder-db --file=./migrations/001_init.sql`
+- Check database: `wrangler d1 execute routine-minder-db --command="SELECT * FROM users"`
 
 ## License
 
