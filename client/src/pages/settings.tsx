@@ -449,22 +449,59 @@ export default function SettingsPage() {
       </Card>
 
       {/* About */}
-      <Card className="p-4 space-y-2">
+      <Card className="p-4 space-y-4">
         <h2 className="font-semibold">About</h2>
         <p className="text-sm text-muted-foreground">
-          Routine Minder v2.1.0
+          Routine Minder v2.2.0
         </p>
         <p className="text-xs text-muted-foreground">
-          A simple habit tracker that works offline.
+          A simple habit tracker that works offline. Build better habits, track your progress, and celebrate your achievements.
         </p>
-        <a 
-          href="https://github.com/ravishan16/routine-minder" 
-          target="_blank" 
-          rel="noopener noreferrer"
-          className="text-xs text-primary hover:underline"
-        >
-          View on GitHub →
-        </a>
+        
+        <div className="flex flex-wrap gap-3 text-sm">
+          <a 
+            href="/" 
+            target="_blank" 
+            rel="noopener noreferrer"
+            className="text-primary hover:underline"
+          >
+            Home
+          </a>
+          <span className="text-muted-foreground">•</span>
+          <a 
+            href="https://github.com/ravishan16/routine-minder" 
+            target="_blank" 
+            rel="noopener noreferrer"
+            className="text-primary hover:underline"
+          >
+            GitHub
+          </a>
+        </div>
+      </Card>
+
+      {/* Legal */}
+      <Card className="p-4 space-y-3">
+        <h2 className="font-semibold text-sm">Legal</h2>
+        <div className="space-y-2 text-xs text-muted-foreground">
+          <div className="space-y-1">
+            <p className="font-medium text-foreground">Privacy Policy</p>
+            <p>
+              Your data is stored locally on your device and optionally synced to our secure cloud servers when you sign in with Google. We don't sell or share your personal information with third parties. Data is encrypted in transit.
+            </p>
+          </div>
+          <div className="space-y-1">
+            <p className="font-medium text-foreground">Terms of Service</p>
+            <p>
+              By using Routine Minder, you agree to use it responsibly. We provide this service as-is without warranties. You can delete your account and all data at any time from the Danger Zone above.
+            </p>
+          </div>
+          <div className="space-y-1">
+            <p className="font-medium text-foreground">Data Collection</p>
+            <p>
+              We collect only what's necessary: your Google profile info (if signed in) and your routine/completion data for sync. No analytics or tracking beyond basic Cloudflare metrics.
+            </p>
+          </div>
+        </div>
       </Card>
     </div>
   );

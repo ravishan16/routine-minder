@@ -1,7 +1,7 @@
 import { useState } from "react";
 import { useQuery, useMutation } from "@tanstack/react-query";
 import { Link } from "wouter";
-import { Sunrise, Sun, Moon, Clock, Plus, CheckCircle2 } from "lucide-react";
+import { Sunrise, Sun, Moon, Clock, Plus, CheckCircle2, CheckCheck } from "lucide-react";
 import { DateNavigator } from "@/components/date-navigator";
 import { ProgressBar } from "@/components/progress-bar";
 import { RoutineCheckbox } from "@/components/routine-checkbox";
@@ -11,6 +11,7 @@ import { Skeleton } from "@/components/ui/skeleton";
 import { formatDate } from "@/lib/utils";
 import { queryClient } from "@/lib/queryClient";
 import { routinesApi, completionsApi } from "@/lib/storage";
+import { useToast } from "@/hooks/use-toast";
 import type { DailyRoutine } from "@/lib/schema";
 
 const categoryOrder = ["AM", "NOON", "PM", "ALL"];
@@ -23,7 +24,9 @@ const categoryConfig: Record<string, { icon: typeof Sunrise; label: string }> = 
 
 export default function TodayPage() {
   const [selectedDate, setSelectedDate] = useState(new Date());
+  const [isMarkingAll, setIsMarkingAll] = useState(false);
   const { theme, toggleTheme } = useTheme();
+  const { toast } = useToast();
   const dateStr = formatDate(selectedDate);
 
   const { data: routines, isLoading } = useQuery({
@@ -42,8 +45,46 @@ export default function TodayPage() {
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["routines", "daily", dateStr] });
       queryClient.invalidateQueries({ queryKey: ["dashboard"] });
+      queryClient.invalidateQueries({ queryKey: ["completions-all"] });
     },
   });
+
+  // Mark all incomplete tasks as complete
+  const handleMarkAllComplete = async () => {
+    if (!routines || isMarkingAll) return;
+    
+    setIsMarkingAll(true);
+    try {
+      const incompleteTasks: { routineId: string; timeCategory: string }[] = [];
+      
+      routines.forEach((routine) => {
+        routine.timeCategories.forEach((category) => {
+          if (!routine.completedCategories.includes(category)) {
+            incompleteTasks.push({ routineId: routine.id, timeCategory: category });
+          }
+        });
+      });
+
+      // Complete all tasks sequentially
+      for (const task of incompleteTasks) {
+        await completionsApi.toggle({
+          routineId: task.routineId,
+          date: dateStr,
+          timeCategory: task.timeCategory,
+        });
+      }
+
+      queryClient.invalidateQueries({ queryKey: ["routines", "daily", dateStr] });
+      queryClient.invalidateQueries({ queryKey: ["dashboard"] });
+      queryClient.invalidateQueries({ queryKey: ["completions-all"] });
+      
+      toast({ title: "All tasks completed! 🎉" });
+    } catch {
+      toast({ title: "Failed to complete tasks", variant: "destructive" });
+    } finally {
+      setIsMarkingAll(false);
+    }
+  };
 
   // Group routines by time category with their completion status
   const groupedRoutines: Record<string, { routine: DailyRoutine; isCompleted: boolean }[]> = {};
@@ -61,6 +102,7 @@ export default function TodayPage() {
   const totalTasks = routines?.reduce((sum, r) => sum + r.timeCategories.length, 0) || 0;
   const completedTasks = routines?.reduce((sum, r) => sum + r.completedCategories.length, 0) || 0;
   const allComplete = totalTasks > 0 && completedTasks === totalTasks;
+  const hasIncompleteTasks = totalTasks > 0 && completedTasks < totalTasks;
 
   if (isLoading) {
     return (
@@ -89,9 +131,21 @@ export default function TodayPage() {
         </Button>
       </div>
 
-      {/* Progress */}
+      {/* Progress with Mark All Complete */}
       {totalTasks > 0 && (
-        <ProgressBar value={completedTasks} max={totalTasks} showLabel />
+        <div className="space-y-2">
+          <ProgressBar value={completedTasks} max={totalTasks} showLabel />
+          {hasIncompleteTasks && (
+            <button
+              onClick={handleMarkAllComplete}
+              disabled={isMarkingAll}
+              className="flex items-center gap-1.5 text-xs text-muted-foreground hover:text-primary transition-colors mx-auto"
+            >
+              <CheckCheck className="h-3.5 w-3.5" />
+              {isMarkingAll ? "Completing..." : "Mark all complete"}
+            </button>
+          )}
+        </div>
       )}
 
       {/* All Complete Message */}

@@ -134,6 +134,73 @@ export function getAchievement(key: string): Achievement | undefined {
   return ACHIEVEMENTS.find(a => a.key === key);
 }
 
+// Progress toward a locked achievement
+export interface AchievementProgress {
+  achievement: Achievement;
+  current: number;
+  target: number;
+  progress: number; // 0-100
+  remaining: number;
+  progressLabel: string;
+}
+
+// Calculate progress for locked achievements
+export function getAchievementProgress(
+  achievement: Achievement,
+  stats: {
+    currentStreak: number;
+    bestStreak: number;
+    totalCompletions: number;
+    totalPerfectDays: number;
+    amCompletions: number;
+    noonCompletions: number;
+    pmCompletions: number;
+    level: { level: number };
+  }
+): AchievementProgress {
+  let current = 0;
+  let label = "";
+  
+  switch (achievement.type) {
+    case "streak":
+      current = stats.bestStreak;
+      label = `${current}/${achievement.requirement} day streak`;
+      break;
+    case "completion":
+      current = stats.totalCompletions;
+      label = `${current}/${achievement.requirement} tasks`;
+      break;
+    case "perfect_day":
+      current = stats.totalPerfectDays;
+      label = `${current}/${achievement.requirement} perfect days`;
+      break;
+    case "time_category":
+      if (achievement.key === "am_50") current = stats.amCompletions;
+      else if (achievement.key === "noon_50") current = stats.noonCompletions;
+      else if (achievement.key === "pm_50") current = stats.pmCompletions;
+      label = `${current}/${achievement.requirement} tasks`;
+      break;
+    case "level":
+      current = stats.level.level;
+      label = `Level ${current}/${achievement.requirement}`;
+      break;
+    default:
+      label = `${current}/${achievement.requirement}`;
+  }
+  
+  const progress = Math.min(100, Math.round((current / achievement.requirement) * 100));
+  const remaining = Math.max(0, achievement.requirement - current);
+  
+  return {
+    achievement,
+    current,
+    target: achievement.requirement,
+    progress,
+    remaining,
+    progressLabel: label,
+  };
+}
+
 // ==================== STATS CALCULATION ====================
 
 export interface GamificationStats {

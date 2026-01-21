@@ -2,7 +2,7 @@ import { useState, useRef } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { 
   Flame, Trophy, CheckCircle2, Target, Sun, Moon, Share2,
-  TrendingUp, Zap, Award, Calendar, ChevronRight, Download
+  TrendingUp, Zap, Award, Calendar, Download
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
@@ -17,6 +17,7 @@ import {
   getPeriodDays, 
   getPeriodLabel,
   getAchievement,
+  getAchievementProgress,
   ACHIEVEMENTS,
   type Period,
   type GamificationStats,
@@ -265,7 +266,6 @@ export default function DashboardPage() {
           </div>
           <div className="text-right">
             <div className="text-2xl font-bold text-primary">{stats.totalXP.toLocaleString()}</div>
-            <div className="text-2xl font-bold text-primary">{stats.totalXP.toLocaleString()}</div>
             <div className="text-sm text-muted-foreground">Total XP</div>
           </div>
         </div>
@@ -398,23 +398,44 @@ export default function DashboardPage() {
         )}
 
         {/* Next achievements to unlock */}
-        {lockedAchievements.length > 0 && (
-          <div className="pt-2 border-t">
-            <p className="text-xs text-muted-foreground mb-2">Next to unlock:</p>
-            <div className="space-y-2">
-              {lockedAchievements.map((achievement) => (
-                <div
-                  key={achievement.key}
-                  className="flex items-center gap-3 p-2 rounded-lg bg-muted/50"
-                >
-                  <div className="text-xl opacity-50">{achievement.icon}</div>
-                  <div className="flex-1">
-                    <div className="text-sm font-medium">{achievement.name}</div>
-                    <div className="text-xs text-muted-foreground">{achievement.description}</div>
+        {lockedAchievements.length > 0 && stats && (
+          <div className="pt-3 border-t">
+            <p className="text-xs font-medium text-muted-foreground mb-3">Next milestones:</p>
+            <div className="space-y-3">
+              {lockedAchievements.map((achievement) => {
+                const progressData = getAchievementProgress(achievement, {
+                  currentStreak: stats.currentStreak,
+                  bestStreak: stats.bestStreak,
+                  totalCompletions: stats.totalCompletions,
+                  totalPerfectDays: stats.totalPerfectDays,
+                  amCompletions: stats.amCompletions,
+                  noonCompletions: stats.noonCompletions,
+                  pmCompletions: stats.pmCompletions,
+                  level: stats.level,
+                });
+                
+                return (
+                  <div
+                    key={achievement.key}
+                    className="p-3 rounded-lg bg-muted/30 border border-border/50"
+                  >
+                    <div className="flex items-center gap-3 mb-2">
+                      <div className="text-xl grayscale opacity-60">{achievement.icon}</div>
+                      <div className="flex-1 min-w-0">
+                        <div className="text-sm font-medium">{achievement.name}</div>
+                        <div className="text-xs text-muted-foreground">{achievement.description}</div>
+                      </div>
+                    </div>
+                    <div className="space-y-1">
+                      <Progress value={progressData.progress} className="h-2" />
+                      <div className="flex justify-between text-[10px] text-muted-foreground">
+                        <span>{progressData.progressLabel}</span>
+                        <span>{progressData.remaining} to go</span>
+                      </div>
+                    </div>
                   </div>
-                  <ChevronRight className="h-4 w-4 text-muted-foreground" />
-                </div>
-              ))}
+                );
+              })}
             </div>
           </div>
         )}
