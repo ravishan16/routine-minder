@@ -16,6 +16,7 @@ const KEYS = {
   completions: "rm_completions",
   lastSync: "rm_lastSync",
   onboarded: "rm_onboarded",
+  visited: "rm_visited",
 };
 
 // Generate device ID
@@ -343,3 +344,13 @@ export const settingsApi = {
     return updated;
   },
 };
+
+// ==================== LANDING PAGE ====================
+
+export function hasVisited(): boolean {
+  return localStorage.getItem(KEYS.visited) === "true";
+}
+
+export function setVisited(): void {
+  localStorage.setItem(KEYS.visited, "true");
+}

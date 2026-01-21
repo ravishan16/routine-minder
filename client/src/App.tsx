@@ -8,12 +8,13 @@ import { ThemeProvider } from "@/components/theme-provider";
 import { ErrorBoundary } from "@/components/error-boundary";
 import { BottomNav } from "@/components/bottom-nav";
 import { Onboarding } from "@/components/onboarding";
+import { LandingPage } from "@/components/landing-page";
 import TodayPage from "@/pages/today";
 import RoutinesPage from "@/pages/routines";
 import DashboardPage from "@/pages/dashboard";
 import SettingsPage from "@/pages/settings";
 import NotFound from "@/pages/not-found";
-import { initAuth, startBackgroundSync, routinesApi, isOnboarded, setOnboarded } from "@/lib/storage";
+import { initAuth, startBackgroundSync, routinesApi, isOnboarded, setOnboarded, hasVisited, setVisited } from "@/lib/storage";
 import type { TimeCategory } from "@/lib/schema";
 
 function Router() {
@@ -29,6 +30,8 @@ function Router() {
 }
 
 function AppContent() {
+  const [showLanding, setShowLanding] = useState(!hasVisited());
+  
   const { data: routines, isLoading } = useQuery({
     queryKey: ["routines"],
     queryFn: routinesApi.getAll,
@@ -45,6 +48,16 @@ function AppContent() {
       queryClient.invalidateQueries({ queryKey: ["routines"] });
     },
   });
+
+  const handleGetStarted = () => {
+    setVisited();
+    setShowLanding(false);
+  };
+
+  // Show landing page for first-time visitors
+  if (showLanding) {
+    return <LandingPage onGetStarted={handleGetStarted} />;
+  }
 
   // Show onboarding if no routines and not yet onboarded
   const showOnboarding = !isLoading && (!routines || routines.length === 0) && !isOnboarded();
