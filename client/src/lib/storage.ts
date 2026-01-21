@@ -395,14 +395,19 @@ export type GoogleUser = {
 
 const GOOGLE_USER_KEY = "rm_google_user";
 
-// Get stored Google user
-export async function getGoogleUser(): Promise<GoogleUser | null> {
+// Get stored Google user (sync version for initial state)
+export function getGoogleUserSync(): GoogleUser | null {
   try {
     const stored = localStorage.getItem(GOOGLE_USER_KEY);
     return stored ? JSON.parse(stored) : null;
   } catch {
     return null;
   }
+}
+
+// Get stored Google user
+export async function getGoogleUser(): Promise<GoogleUser | null> {
+  return getGoogleUserSync();
 }
 
 // Check if signed in with Google
