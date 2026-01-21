@@ -251,20 +251,29 @@ export function calculateGamificationStats(
   // Active routines only
   const activeRoutines = routines.filter(r => r.isActive);
   
-  // Calculate current streak
+  // Calculate current streak (days with ALL tasks completed)
   let currentStreak = 0;
   const checkDate = new Date();
+  let skippedToday = false;
+  
   for (let i = 0; i < 365; i++) {
     const dateStr = formatDate(checkDate);
     const dayCompletions = completions.filter(c => c.date === dateStr);
-    if (dayCompletions.length > 0) {
+    const expectedTasks = activeRoutines.reduce((sum, r) => sum + r.timeCategories.length, 0);
+    
+    // Check if all tasks were completed for this day
+    const isComplete = expectedTasks > 0 && dayCompletions.length >= expectedTasks;
+    
+    if (isComplete) {
       currentStreak++;
       checkDate.setDate(checkDate.getDate() - 1);
-    } else if (i > 0) {
-      break;
-    } else {
-      // Allow skipping today if nothing completed yet
+    } else if (i === 0) {
+      // Today not complete yet, check yesterday for streak start
+      skippedToday = true;
       checkDate.setDate(checkDate.getDate() - 1);
+    } else {
+      // Gap found, streak is broken
+      break;
     }
   }
   
@@ -405,30 +414,38 @@ export function calculateRoutineStats(
   const periodStartStr = formatDate(periodStart);
   const periodCompletions = routineCompletions.filter(c => c.date >= periodStartStr);
   
-  // Calculate routine-specific streak
+  // Calculate routine-specific streak (going backwards from today)
   let currentStreak = 0;
   const checkDate = new Date();
+  
   for (let i = 0; i < 365; i++) {
     const dateStr = formatDate(checkDate);
     const dayCompletions = routineCompletions.filter(c => c.date === dateStr);
-    // Check if all time categories were completed
+    
+    // Check if all time categories were completed for this routine on this day
     const completedCategories = dayCompletions.map(c => c.timeCategory);
     const allCompleted = routine.timeCategories.every(cat => completedCategories.includes(cat));
     
     if (allCompleted) {
       currentStreak++;
       checkDate.setDate(checkDate.getDate() - 1);
-    } else if (i > 0) {
-      break;
     } else {
-      checkDate.setDate(checkDate.getDate() - 1);
+      // If today is incomplete, check if yesterday starts a streak
+      // Otherwise, break the streak
+      if (i === 0) {
+        // Today is not complete, check yesterday
+        checkDate.setDate(checkDate.getDate() - 1);
+        continue;
+      }
+      // Past day not complete - streak is broken
+      break;
     }
   }
   
-  // Completion rate
+  // Completion rate for the period
   const expectedInPeriod = routine.timeCategories.length * periodDays;
   const completionRate = expectedInPeriod > 0 
-    ? Math.round((periodCompletions.length / expectedInPeriod) * 100) 
+    ? Math.min(100, Math.round((periodCompletions.length / expectedInPeriod) * 100))
     : 0;
   
   return {

@@ -22,7 +22,8 @@ import {
   type Period,
   type GamificationStats,
   type RoutineStats,
-  type Achievement
+  type Achievement,
+  type AchievementProgress
 } from "@/lib/achievements";
 import type { Routine, Completion } from "@/lib/schema";
 import html2canvas from "html2canvas";
@@ -192,6 +193,48 @@ export default function DashboardPage() {
     
     if (blob) {
       await shareImage(blob, `routine-${routine.routineName.toLowerCase().replace(/\s+/g, "-")}.png`);
+    }
+    setIsSharing(false);
+  };
+
+  // Share milestone progress
+  const handleShareMilestone = async (progressData: AchievementProgress) => {
+    setIsSharing(true);
+    
+    const tempDiv = document.createElement("div");
+    tempDiv.style.position = "absolute";
+    tempDiv.style.left = "-9999px";
+    tempDiv.style.padding = "24px";
+    tempDiv.style.background = theme === "dark" ? "#1a1a1a" : "#ffffff";
+    tempDiv.style.borderRadius = "16px";
+    tempDiv.style.minWidth = "300px";
+    tempDiv.style.textAlign = "center";
+    tempDiv.style.fontFamily = "system-ui, -apple-system, sans-serif";
+    
+    const progressColor = theme === "dark" ? "#f97316" : "#ea580c";
+    const bgColor = theme === "dark" ? "#2a2a2a" : "#f0f0f0";
+    
+    tempDiv.innerHTML = `
+      <div style="font-size: 48px; margin-bottom: 12px; filter: grayscale(0.5); opacity: 0.8;">${progressData.achievement.icon}</div>
+      <div style="font-size: 20px; font-weight: bold; margin-bottom: 4px; color: ${theme === "dark" ? "#fff" : "#000"};">${progressData.achievement.name}</div>
+      <div style="font-size: 13px; color: ${theme === "dark" ? "#888" : "#666"}; margin-bottom: 16px;">${progressData.achievement.description}</div>
+      <div style="background: ${bgColor}; border-radius: 8px; height: 12px; overflow: hidden; margin-bottom: 8px;">
+        <div style="background: ${progressColor}; height: 100%; width: ${progressData.progress}%; border-radius: 8px;"></div>
+      </div>
+      <div style="display: flex; justify-content: space-between; font-size: 12px; color: ${theme === "dark" ? "#888" : "#666"};">
+        <span>${progressData.progressLabel}</span>
+        <span>${progressData.remaining} to go</span>
+      </div>
+      <div style="font-size: 13px; color: ${progressColor}; font-weight: 500; margin-top: 16px;">🎯 Working toward this milestone!</div>
+      <div style="font-size: 11px; color: ${theme === "dark" ? "#666" : "#999"}; margin-top: 12px;">routine-minder.pages.dev</div>
+    `;
+    
+    document.body.appendChild(tempDiv);
+    const blob = await generateShareImage(tempDiv);
+    document.body.removeChild(tempDiv);
+    
+    if (blob) {
+      await shareImage(blob, `milestone-${progressData.achievement.key}.png`);
     }
     setIsSharing(false);
   };
@@ -415,9 +458,11 @@ export default function DashboardPage() {
                 });
                 
                 return (
-                  <div
+                  <button
                     key={achievement.key}
-                    className="p-3 rounded-lg bg-muted/30 border border-border/50"
+                    onClick={() => handleShareMilestone(progressData)}
+                    disabled={isSharing}
+                    className="w-full p-3 rounded-lg bg-muted/30 border border-border/50 hover:bg-muted/50 hover:border-border transition-colors cursor-pointer text-left"
                   >
                     <div className="flex items-center gap-3 mb-2">
                       <div className="text-xl grayscale opacity-60">{achievement.icon}</div>
@@ -425,6 +470,7 @@ export default function DashboardPage() {
                         <div className="text-sm font-medium">{achievement.name}</div>
                         <div className="text-xs text-muted-foreground">{achievement.description}</div>
                       </div>
+                      <Share2 className="h-3.5 w-3.5 text-muted-foreground" />
                     </div>
                     <div className="space-y-1">
                       <Progress value={progressData.progress} className="h-2" />
@@ -433,7 +479,7 @@ export default function DashboardPage() {
                         <span>{progressData.remaining} to go</span>
                       </div>
                     </div>
-                  </div>
+                  </button>
                 );
               })}
             </div>
