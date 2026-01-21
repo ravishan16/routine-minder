@@ -31,7 +31,6 @@ export default function SetupPage() {
 
     try {
       // Open the Apps Script URL - it will handle Google Sign-In
-      // The script runs as "User accessing the web app" so it uses THEIR Google account
       const authUrl = `${SCRIPT_URL}?action=auth`;
       
       // Open in popup for auth
@@ -41,29 +40,27 @@ export default function SetupPage() {
         "width=500,height=600,menubar=no,toolbar=no"
       );
 
-      // Listen for callback
-      const handleMessage = (event: MessageEvent) => {
-        if (event.data?.type === "ROUTINE_MINDER_AUTH") {
-          if (event.data.success) {
-            localStorage.setItem("routineMinder_scriptUrl", SCRIPT_URL);
-            localStorage.setItem("routineMinder_user", JSON.stringify(event.data.user));
-            window.location.reload();
-          } else {
-            setError(event.data.error || "Sign in failed");
-          }
-          popup?.close();
-          setIsConnecting(false);
-        }
-      };
-
-      window.addEventListener("message", handleMessage);
-
-      // Check if popup was closed without completing
-      const checkClosed = setInterval(() => {
+      // Poll to check when popup closes, then verify auth
+      const checkClosed = setInterval(async () => {
         if (popup?.closed) {
           clearInterval(checkClosed);
-          window.removeEventListener("message", handleMessage);
-          setIsConnecting(false);
+          
+          // Popup closed - try to verify auth by calling the API
+          try {
+            const response = await fetch(`${SCRIPT_URL}?action=getRoutines`);
+            if (response.ok) {
+              // Auth successful - save and reload
+              localStorage.setItem("routineMinder_scriptUrl", SCRIPT_URL);
+              localStorage.setItem("routineMinder_user", JSON.stringify({ email: "user" }));
+              window.location.reload();
+            } else {
+              setError("Authentication failed. Please try again.");
+              setIsConnecting(false);
+            }
+          } catch {
+            setError("Could not verify authentication. Please try again.");
+            setIsConnecting(false);
+          }
         }
       }, 500);
 
