@@ -145,9 +145,14 @@ export function Onboarding({ onComplete, onGoogleSignIn, isLoading }: Onboarding
           <div className="inline-flex items-center justify-center w-16 h-16 rounded-full bg-primary/10 mb-2">
             <Sparkles className="w-8 h-8 text-primary" />
           </div>
-          <h1 className="text-2xl font-bold">Welcome to Routine Minder</h1>
+          <h1 className="text-2xl font-bold">
+            {signedInUser ? "Let's Get Started!" : "Welcome to Routine Minder"}
+          </h1>
           <p className="text-muted-foreground text-sm">
-            Choose some habits to track. You can always customize later.
+            {signedInUser 
+              ? "Select the habits you want to track below, then tap the button to begin."
+              : "Choose some habits to track. You can always customize later."
+            }
           </p>
         </div>
 
@@ -193,7 +198,9 @@ export function Onboarding({ onComplete, onGoogleSignIn, isLoading }: Onboarding
         {/* Divider */}
         <div className="flex items-center gap-3">
           <div className="flex-1 h-px bg-border" />
-          <span className="text-xs text-muted-foreground">or start fresh</span>
+          <span className="text-xs text-muted-foreground">
+            {signedInUser ? "pick routines to track" : "or start fresh"}
+          </span>
           <div className="flex-1 h-px bg-border" />
         </div>
 
