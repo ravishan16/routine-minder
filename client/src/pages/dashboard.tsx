@@ -18,6 +18,7 @@ import {
   getPeriodLabel,
   getAchievement,
   getAchievementProgress,
+  getNextStreakMilestone,
   ACHIEVEMENTS,
   type Period,
   type GamificationStats,
@@ -389,6 +390,66 @@ export default function DashboardPage() {
         </Card>
       </div>
 
+      {/* Per-Routine Stats - moved up */}
+      {routineStats.length > 0 && (
+        <Card className="p-4 space-y-4">
+          <h2 className="font-semibold flex items-center gap-2">
+            <Calendar className="h-4 w-4" />
+            Routine Performance
+          </h2>
+          <div className="space-y-4">
+            {routineStats.map((routine) => {
+              const milestone = getNextStreakMilestone(routine.currentStreak);
+              
+              return (
+                <button
+                  key={routine.routineId}
+                  onClick={() => handleShareRoutine(routine)}
+                  disabled={isSharing}
+                  className="w-full p-3 rounded-lg bg-muted/30 border border-border/50 hover:bg-muted/50 hover:border-border transition-colors cursor-pointer text-left"
+                >
+                  <div className="flex items-center justify-between mb-2">
+                    <div className="flex items-center gap-2">
+                      <span className="text-xl">{routine.routineIcon}</span>
+                      <span className="font-medium">{routine.routineName}</span>
+                    </div>
+                    <Share2 className="h-3.5 w-3.5 text-muted-foreground" />
+                  </div>
+                  
+                  <div className="flex items-center gap-4 text-sm mb-2">
+                    <span className="flex items-center gap-1">
+                      <span className="text-orange-500">🔥</span>
+                      <span className="font-bold">{routine.currentStreak}d</span>
+                      <span className="text-muted-foreground">streak</span>
+                    </span>
+                    <span className="flex items-center gap-1">
+                      <span className="font-bold text-primary">{routine.completionRate}%</span>
+                      <span className="text-muted-foreground">rate</span>
+                    </span>
+                  </div>
+                  
+                  {milestone && (
+                    <div className="space-y-1">
+                      <div className="flex justify-between text-xs text-muted-foreground">
+                        <span>Next: {milestone.target} day streak</span>
+                        <span>{milestone.remaining}d to go</span>
+                      </div>
+                      <Progress value={milestone.progress} className="h-1.5" />
+                    </div>
+                  )}
+                  
+                  {!milestone && (
+                    <div className="text-xs text-muted-foreground">
+                      🏆 All streak milestones achieved!
+                    </div>
+                  )}
+                </button>
+              );
+            })}
+          </div>
+        </Card>
+      )}
+
       {/* Completion Rate Visual */}
       <Card className="p-4 space-y-3">
         <div className="flex justify-between items-center">
@@ -486,45 +547,6 @@ export default function DashboardPage() {
           </div>
         )}
       </Card>
-
-      {/* Per-Routine Stats */}
-      {routineStats.length > 0 && (
-        <Card className="p-4 space-y-4">
-          <h2 className="font-semibold flex items-center gap-2">
-            <Calendar className="h-4 w-4" />
-            Routine Performance
-          </h2>
-          <div className="space-y-3">
-            {routineStats.map((routine) => (
-              <button
-                key={routine.routineId}
-                onClick={() => handleShareRoutine(routine)}
-                disabled={isSharing}
-                className="w-full space-y-2 p-2 -mx-2 rounded-lg hover:bg-muted/50 transition-colors cursor-pointer text-left"
-              >
-                <div className="flex items-center justify-between">
-                  <div className="flex items-center gap-2">
-                    <span className="text-lg">{routine.routineIcon}</span>
-                    <span className="text-sm font-medium truncate max-w-[120px]">
-                      {routine.routineName}
-                    </span>
-                  </div>
-                  <div className="flex items-center gap-2 text-sm">
-                    <span className="text-muted-foreground">
-                      🔥 {routine.currentStreak}d
-                    </span>
-                    <span className="font-medium text-primary">
-                      {routine.completionRate}%
-                    </span>
-                    <Share2 className="h-3.5 w-3.5 text-muted-foreground" />
-                  </div>
-                </div>
-                <Progress value={routine.completionRate} className="h-1.5" />
-              </button>
-            ))}
-          </div>
-        </Card>
-      )}
 
       {/* Time Category Breakdown */}
       <Card className="p-4 space-y-3">

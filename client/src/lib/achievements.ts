@@ -134,6 +134,26 @@ export function getAchievement(key: string): Achievement | undefined {
   return ACHIEVEMENTS.find(a => a.key === key);
 }
 
+// Streak milestones for per-routine display
+const STREAK_MILESTONES = [7, 21, 30, 50, 100, 365];
+
+// Get next streak milestone for a routine
+export function getNextStreakMilestone(currentStreak: number): { target: number; remaining: number; progress: number } | null {
+  const nextTarget = STREAK_MILESTONES.find(m => m > currentStreak);
+  if (!nextTarget) return null; // Already past all milestones
+  
+  // Find previous milestone (or 0)
+  const prevMilestoneIndex = STREAK_MILESTONES.findIndex(m => m === nextTarget) - 1;
+  const prevMilestone = prevMilestoneIndex >= 0 ? STREAK_MILESTONES[prevMilestoneIndex] : 0;
+  
+  const remaining = nextTarget - currentStreak;
+  const progressInSegment = currentStreak - prevMilestone;
+  const segmentSize = nextTarget - prevMilestone;
+  const progress = Math.round((progressInSegment / segmentSize) * 100);
+  
+  return { target: nextTarget, remaining, progress };
+}
+
 // Progress toward a locked achievement
 export interface AchievementProgress {
   achievement: Achievement;
