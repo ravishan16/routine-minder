@@ -161,6 +161,47 @@ app.post('/api/auth/google', async (c) => {
   }
 });
 
+// ==================== USER STATS (Gamification) ====================
+
+// Get user stats (for cross-device sync of gamification data)
+app.get('/api/user/stats', async (c) => {
+  const userId = c.req.header('X-User-Id');
+  if (!userId) return c.json({ error: 'Unauthorized' }, 401);
+
+  const user = await c.env.DB.prepare(
+    'SELECT best_streak, total_xp, level FROM users WHERE id = ?'
+  ).bind(userId).first();
+
+  if (!user) {
+    return c.json({ bestStreak: 0, totalXp: 0, level: 1 });
+  }
+
+  return c.json({
+    bestStreak: user.best_streak || 0,
+    totalXp: user.total_xp || 0,
+    level: user.level || 1,
+  });
+});
+
+// Update user stats
+app.put('/api/user/stats', async (c) => {
+  const userId = c.req.header('X-User-Id');
+  if (!userId) return c.json({ error: 'Unauthorized' }, 401);
+
+  const { bestStreak, totalXp, level } = await c.req.json();
+
+  await c.env.DB.prepare(
+    'UPDATE users SET best_streak = ?, total_xp = ?, level = ? WHERE id = ?'
+  ).bind(
+    bestStreak || 0,
+    totalXp || 0,
+    level || 1,
+    userId
+  ).run();
+
+  return c.json({ success: true });
+});
+
 // ==================== ROUTINES ====================
 
 // Get all routines for user (excludes soft-deleted)
@@ -435,37 +476,15 @@ app.delete('/api/users/:userId', async (c) => {
 
 // ==================== SYNC ====================
 
-// Bulk sync from localStorage
+// Bulk sync from localStorage (only completions - routines require online CRUD)
 app.post('/api/sync', async (c) => {
   const userId = c.req.header('X-User-Id');
   if (!userId) return c.json({ error: 'Unauthorized' }, 401);
 
-  const { routines, completions } = await c.req.json();
+  const { completions } = await c.req.json();
 
-  // Sync routines
-  if (routines && Array.isArray(routines)) {
-    for (const r of routines) {
-      await c.env.DB.prepare(`
-        INSERT INTO routines (id, user_id, name, icon, time_categories, is_active, sort_order, created_at)
-        VALUES (?, ?, ?, ?, ?, ?, ?, ?)
-        ON CONFLICT(id) DO UPDATE SET
-          name = excluded.name,
-          icon = excluded.icon,
-          time_categories = excluded.time_categories,
-          is_active = excluded.is_active,
-          sort_order = excluded.sort_order
-      `).bind(
-        r.id,
-        userId,
-        r.name,
-        r.icon || '✅',
-        JSON.stringify(r.timeCategories),
-        r.isActive ? 1 : 0,
-        r.sortOrder || 0,
-        r.createdAt || new Date().toISOString()
-      ).run();
-    }
-  }
+  // Note: Routines are created/updated/deleted directly via their endpoints
+  // This sync only handles offline-first completions
 
   // Sync completions
   if (completions && Array.isArray(completions)) {

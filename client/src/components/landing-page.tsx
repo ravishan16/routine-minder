@@ -3,7 +3,7 @@ import { Github, Moon, Sun, Sparkles, ArrowRight, CheckCircle2, Zap, Smartphone,
 import { Button } from "@/components/ui/button";
 import { useTheme } from "@/components/theme-provider";
 import { Link } from "wouter";
-import { signInWithGoogle, isGoogleSignedIn } from "@/lib/storage";
+import { signInWithGoogle } from "@/lib/storage";
 
 type LandingPageProps = {
   onGetStarted: () => void;
@@ -25,7 +25,7 @@ export function LandingPage({ onGetStarted }: LandingPageProps) {
     setIsSigningIn(true);
     setSignInError(null);
     try {
-      const result = await signInWithGoogle();
+      await signInWithGoogle();
       // User authenticated - proceed to app
       onGetStarted();
     } catch (error) {

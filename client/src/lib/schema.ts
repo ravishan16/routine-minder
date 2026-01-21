@@ -65,12 +65,3 @@ export const CreateRoutineSchema = z.object({
 });
 
 export type CreateRoutineInput = z.infer<typeof CreateRoutineSchema>;
-
-// Toggle completion input
-export const ToggleCompletionSchema = z.object({
-  routineId: z.string(),
-  date: z.string(),
-  timeCategory: TimeCategory,
-});
-
-export type ToggleCompletionInput = z.infer<typeof ToggleCompletionSchema>;

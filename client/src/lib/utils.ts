@@ -31,22 +31,4 @@ export function formatDisplayDate(date: Date): string {
   });
 }
 
-export function getTimeCategoryIcon(category: string): string {
-  switch (category) {
-    case 'AM': return 'sunrise';
-    case 'NOON': return 'sun';
-    case 'PM': return 'moon';
-    case 'ALL': return 'clock';
-    default: return 'clock';
-  }
-}
 
-export function getTimeCategoryLabel(category: string): string {
-  switch (category) {
-    case 'AM': return 'Morning';
-    case 'NOON': return 'Noon';
-    case 'PM': return 'Evening';
-    case 'ALL': return 'All Day';
-    default: return category;
-  }
-}

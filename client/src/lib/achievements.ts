@@ -152,7 +152,8 @@ export interface GamificationStats {
   totalCompletions: number;
   periodCompletions: number;
   completionRate: number;
-  perfectDays: number;
+  perfectDays: number;        // Within selected period
+  totalPerfectDays: number;   // All time
   
   // Time category breakdown
   amCompletions: number;
@@ -217,11 +218,11 @@ export function calculateGamificationStats(
   const pmCompletions = completions.filter(c => c.timeCategory === "PM").length;
   const allDayCompletions = completions.filter(c => c.timeCategory === "ALL").length;
   
-  // Perfect days calculation
+  // Perfect days calculation (within selected period only)
   let perfectDays = 0;
-  const uniqueDates = Array.from(new Set(completions.map(c => c.date))).sort().reverse();
+  const periodDates = Array.from(new Set(periodCompletions.map(c => c.date))).sort().reverse();
   
-  for (const date of uniqueDates) {
+  for (const date of periodDates) {
     const dayCompletions = completions.filter(c => c.date === date);
     const expectedTasks = activeRoutines.reduce((sum, r) => sum + r.timeCategories.length, 0);
     if (dayCompletions.length >= expectedTasks && expectedTasks > 0) {
@@ -229,10 +230,22 @@ export function calculateGamificationStats(
     }
   }
   
-  // Completion rate for period
+  // Total perfect days (all time) for lifetime stats
+  let totalPerfectDays = 0;
+  const allDates = Array.from(new Set(completions.map(c => c.date))).sort().reverse();
+  
+  for (const date of allDates) {
+    const dayCompletions = completions.filter(c => c.date === date);
+    const expectedTasks = activeRoutines.reduce((sum, r) => sum + r.timeCategories.length, 0);
+    if (dayCompletions.length >= expectedTasks && expectedTasks > 0) {
+      totalPerfectDays++;
+    }
+  }
+  
+  // Completion rate for period (capped at 100%)
   const expectedInPeriod = activeRoutines.reduce((sum, r) => sum + r.timeCategories.length, 0) * periodDays;
   const completionRate = expectedInPeriod > 0 
-    ? Math.round((periodCompletions.length / expectedInPeriod) * 100) 
+    ? Math.min(100, Math.round((periodCompletions.length / expectedInPeriod) * 100))
     : 0;
   
   // Calculate XP (10 XP per completion, simplified)
@@ -290,6 +303,7 @@ export function calculateGamificationStats(
     periodCompletions: periodCompletions.length,
     completionRate,
     perfectDays,
+    totalPerfectDays,
     amCompletions,
     noonCompletions,
     pmCompletions,

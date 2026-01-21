@@ -1,8 +1,8 @@
-import { useState } from "react";
+import { useState, useRef } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { 
   Flame, Trophy, CheckCircle2, Target, Sun, Moon, Share2,
-  TrendingUp, Zap, Award, Calendar, ChevronRight
+  TrendingUp, Zap, Award, Calendar, ChevronRight, Download
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
@@ -20,14 +20,21 @@ import {
   ACHIEVEMENTS,
   type Period,
   type GamificationStats,
-  type RoutineStats
+  type RoutineStats,
+  type Achievement
 } from "@/lib/achievements";
 import type { Routine, Completion } from "@/lib/schema";
+import html2canvas from "html2canvas";
 
 export default function DashboardPage() {
   const { theme, toggleTheme } = useTheme();
   const { toast } = useToast();
   const [period, setPeriod] = useState<Period>("7d");
+  const [isSharing, setIsSharing] = useState(false);
+  
+  // Refs for shareable elements
+  const statsCardRef = useRef<HTMLDivElement>(null);
+  const achievementCardRef = useRef<HTMLDivElement>(null);
 
   const { data: routines = [] } = useQuery<Routine[]>({
     queryKey: ["routines"],
@@ -53,25 +60,139 @@ export default function DashboardPage() {
     .map(r => calculateRoutineStats(r, completions, periodDays))
     .sort((a, b) => b.completionRate - a.completionRate);
 
-  const handleShare = async () => {
-    const shareText = stats 
-      ? `🔥 ${stats.currentStreak} day streak | ${stats.level.icon} Level ${stats.level.level} ${stats.level.name} | ${stats.totalCompletions} tasks completed on Routine Minder!`
-      : "Check out Routine Minder - a simple habit tracker!";
+  // Generate shareable image from element
+  const generateShareImage = async (element: HTMLElement): Promise<Blob | null> => {
+    try {
+      const canvas = await html2canvas(element, {
+        backgroundColor: theme === "dark" ? "#1a1a1a" : "#ffffff",
+        scale: 2,
+        logging: false,
+        useCORS: true,
+      });
+      
+      return new Promise((resolve) => {
+        canvas.toBlob((blob) => resolve(blob), "image/png", 1.0);
+      });
+    } catch (error) {
+      console.error("Failed to generate image:", error);
+      return null;
+    }
+  };
+
+  // Share image (uses Web Share API if available, otherwise downloads)
+  const shareImage = async (blob: Blob, filename: string) => {
+    const file = new File([blob], filename, { type: "image/png" });
     
-    if (navigator.share) {
+    if (navigator.canShare?.({ files: [file] })) {
       try {
         await navigator.share({
+          files: [file],
           title: "My Routine Minder Stats",
-          text: shareText,
-          url: window.location.origin,
         });
+        return true;
       } catch {
-        // User cancelled
+        // User cancelled or share failed
       }
-    } else {
-      await navigator.clipboard.writeText(shareText);
-      toast({ title: "Stats copied to clipboard!" });
     }
+    
+    // Fallback: download image
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement("a");
+    a.href = url;
+    a.download = filename;
+    a.click();
+    URL.revokeObjectURL(url);
+    toast({ title: "Image saved!", description: "Share it from your downloads." });
+    return true;
+  };
+
+  // Share overall stats
+  const handleShareStats = async () => {
+    if (!statsCardRef.current || isSharing) return;
+    setIsSharing(true);
+    
+    const blob = await generateShareImage(statsCardRef.current);
+    if (blob) {
+      await shareImage(blob, `routine-minder-stats-${new Date().toISOString().split("T")[0]}.png`);
+    }
+    setIsSharing(false);
+  };
+
+  // Share specific achievement
+  const handleShareAchievement = async (achievement: Achievement) => {
+    setIsSharing(true);
+    
+    // Create a temporary element for this achievement
+    const tempDiv = document.createElement("div");
+    tempDiv.style.position = "absolute";
+    tempDiv.style.left = "-9999px";
+    tempDiv.style.padding = "24px";
+    tempDiv.style.background = theme === "dark" ? "#1a1a1a" : "#ffffff";
+    tempDiv.style.borderRadius = "16px";
+    tempDiv.style.minWidth = "280px";
+    tempDiv.style.textAlign = "center";
+    tempDiv.style.fontFamily = "system-ui, -apple-system, sans-serif";
+    
+    tempDiv.innerHTML = `
+      <div style="font-size: 64px; margin-bottom: 16px;">${achievement.icon}</div>
+      <div style="font-size: 24px; font-weight: bold; margin-bottom: 8px; color: ${theme === "dark" ? "#fff" : "#000"};">${achievement.name}</div>
+      <div style="font-size: 14px; color: ${theme === "dark" ? "#888" : "#666"}; margin-bottom: 16px;">${achievement.description}</div>
+      <div style="font-size: 12px; color: ${theme === "dark" ? "#f97316" : "#ea580c"}; font-weight: 500;">🏆 Achievement Unlocked!</div>
+      <div style="font-size: 11px; color: ${theme === "dark" ? "#666" : "#999"}; margin-top: 12px;">routine-minder.pages.dev</div>
+    `;
+    
+    document.body.appendChild(tempDiv);
+    const blob = await generateShareImage(tempDiv);
+    document.body.removeChild(tempDiv);
+    
+    if (blob) {
+      await shareImage(blob, `achievement-${achievement.key}.png`);
+    }
+    setIsSharing(false);
+  };
+
+  // Share routine stats
+  const handleShareRoutine = async (routine: RoutineStats) => {
+    setIsSharing(true);
+    
+    const tempDiv = document.createElement("div");
+    tempDiv.style.position = "absolute";
+    tempDiv.style.left = "-9999px";
+    tempDiv.style.padding = "24px";
+    tempDiv.style.background = theme === "dark" ? "#1a1a1a" : "#ffffff";
+    tempDiv.style.borderRadius = "16px";
+    tempDiv.style.minWidth = "300px";
+    tempDiv.style.fontFamily = "system-ui, -apple-system, sans-serif";
+    
+    tempDiv.innerHTML = `
+      <div style="display: flex; align-items: center; gap: 12px; margin-bottom: 20px;">
+        <span style="font-size: 48px;">${routine.routineIcon}</span>
+        <div>
+          <div style="font-size: 20px; font-weight: bold; color: ${theme === "dark" ? "#fff" : "#000"};">${routine.routineName}</div>
+          <div style="font-size: 14px; color: ${theme === "dark" ? "#888" : "#666"};">My Routine Stats</div>
+        </div>
+      </div>
+      <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 16px; margin-bottom: 16px;">
+        <div style="padding: 16px; background: ${theme === "dark" ? "#2a2a2a" : "#f5f5f5"}; border-radius: 12px; text-align: center;">
+          <div style="font-size: 28px; font-weight: bold; color: ${theme === "dark" ? "#f97316" : "#ea580c"};">🔥 ${routine.currentStreak}</div>
+          <div style="font-size: 12px; color: ${theme === "dark" ? "#888" : "#666"};">Day Streak</div>
+        </div>
+        <div style="padding: 16px; background: ${theme === "dark" ? "#2a2a2a" : "#f5f5f5"}; border-radius: 12px; text-align: center;">
+          <div style="font-size: 28px; font-weight: bold; color: ${theme === "dark" ? "#22c55e" : "#16a34a"};">${routine.completionRate}%</div>
+          <div style="font-size: 12px; color: ${theme === "dark" ? "#888" : "#666"};">Completion</div>
+        </div>
+      </div>
+      <div style="font-size: 11px; color: ${theme === "dark" ? "#666" : "#999"}; text-align: center;">routine-minder.pages.dev</div>
+    `;
+    
+    document.body.appendChild(tempDiv);
+    const blob = await generateShareImage(tempDiv);
+    document.body.removeChild(tempDiv);
+    
+    if (blob) {
+      await shareImage(blob, `routine-${routine.routineName.toLowerCase().replace(/\s+/g, "-")}.png`);
+    }
+    setIsSharing(false);
   };
 
   if (!stats) {
@@ -111,10 +232,6 @@ export default function DashboardPage() {
       <div className="flex items-center justify-between">
         <h1 className="text-2xl font-bold">Dashboard</h1>
         <div className="flex gap-2">
-          <Button variant="outline" size="sm" onClick={handleShare}>
-            <Share2 className="h-4 w-4 mr-2" />
-            Share Stats
-          </Button>
           <Button variant="ghost" size="icon" onClick={toggleTheme}>
             {theme === "dark" ? <Sun className="h-5 w-5" /> : <Moon className="h-5 w-5" />}
           </Button>
@@ -136,8 +253,8 @@ export default function DashboardPage() {
         ))}
       </div>
 
-      {/* Level & XP Hero Card */}
-      <Card className="p-6 bg-gradient-to-br from-primary/20 via-primary/10 to-background border-primary/20">
+      {/* Level & XP Hero Card - Shareable */}
+      <Card ref={statsCardRef} className="p-6 bg-gradient-to-br from-primary/20 via-primary/10 to-background border-primary/20">
         <div className="flex items-center justify-between mb-4">
           <div className="flex items-center gap-3">
             <div className="text-4xl">{stats.level.icon}</div>
@@ -147,6 +264,7 @@ export default function DashboardPage() {
             </div>
           </div>
           <div className="text-right">
+            <div className="text-2xl font-bold text-primary">{stats.totalXP.toLocaleString()}</div>
             <div className="text-2xl font-bold text-primary">{stats.totalXP.toLocaleString()}</div>
             <div className="text-sm text-muted-foreground">Total XP</div>
           </div>
@@ -168,6 +286,17 @@ export default function DashboardPage() {
             </span>
           </div>
         )}
+        {/* Share Stats Button */}
+        <Button 
+          variant="outline" 
+          size="sm" 
+          className="mt-4 w-full" 
+          onClick={handleShareStats}
+          disabled={isSharing}
+        >
+          <Share2 className="h-4 w-4 mr-2" />
+          {isSharing ? "Generating..." : "Share Stats"}
+        </Button>
       </Card>
 
       {/* Stats Grid */}
@@ -234,7 +363,7 @@ export default function DashboardPage() {
       </Card>
 
       {/* Achievements Section */}
-      <Card className="p-4 space-y-4">
+      <Card ref={achievementCardRef} className="p-4 space-y-4">
         <div className="flex items-center justify-between">
           <h2 className="font-semibold flex items-center gap-2">
             <Award className="h-4 w-4" />
@@ -248,13 +377,18 @@ export default function DashboardPage() {
         {unlockedAchievementDetails.length > 0 ? (
           <div className="grid grid-cols-3 gap-3">
             {unlockedAchievementDetails.map((achievement) => (
-              <div
+              <button
                 key={achievement!.key}
-                className="flex flex-col items-center p-3 rounded-lg bg-primary/5 border border-primary/10"
+                onClick={() => handleShareAchievement(achievement!)}
+                disabled={isSharing}
+                className="flex flex-col items-center p-3 rounded-lg bg-primary/5 border border-primary/10 hover:bg-primary/10 hover:border-primary/20 transition-colors cursor-pointer"
               >
                 <div className="text-2xl mb-1">{achievement!.icon}</div>
                 <div className="text-xs font-medium text-center">{achievement!.name}</div>
-              </div>
+                <div className="text-[10px] text-muted-foreground mt-1 flex items-center gap-1">
+                  <Share2 className="h-2.5 w-2.5" /> Share
+                </div>
+              </button>
             ))}
           </div>
         ) : (
@@ -295,25 +429,31 @@ export default function DashboardPage() {
           </h2>
           <div className="space-y-3">
             {routineStats.map((routine) => (
-              <div key={routine.routineId} className="space-y-2">
+              <button
+                key={routine.routineId}
+                onClick={() => handleShareRoutine(routine)}
+                disabled={isSharing}
+                className="w-full space-y-2 p-2 -mx-2 rounded-lg hover:bg-muted/50 transition-colors cursor-pointer text-left"
+              >
                 <div className="flex items-center justify-between">
                   <div className="flex items-center gap-2">
                     <span className="text-lg">{routine.routineIcon}</span>
-                    <span className="text-sm font-medium truncate max-w-[150px]">
+                    <span className="text-sm font-medium truncate max-w-[120px]">
                       {routine.routineName}
                     </span>
                   </div>
-                  <div className="flex items-center gap-3 text-sm">
+                  <div className="flex items-center gap-2 text-sm">
                     <span className="text-muted-foreground">
                       🔥 {routine.currentStreak}d
                     </span>
                     <span className="font-medium text-primary">
                       {routine.completionRate}%
                     </span>
+                    <Share2 className="h-3.5 w-3.5 text-muted-foreground" />
                   </div>
                 </div>
                 <Progress value={routine.completionRate} className="h-1.5" />
-              </div>
+              </button>
             ))}
           </div>
         </Card>
@@ -355,7 +495,7 @@ export default function DashboardPage() {
             <div className="text-xs text-muted-foreground">Total Tasks</div>
           </div>
           <div>
-            <div className="text-2xl font-bold">{stats.perfectDays}</div>
+            <div className="text-2xl font-bold">{stats.totalPerfectDays}</div>
             <div className="text-xs text-muted-foreground">Perfect Days</div>
           </div>
           <div>

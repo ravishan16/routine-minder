@@ -129,23 +129,35 @@ export function setOnboarded(): void {
 
 // ==================== SYNC ====================
 
+type UserStats = { bestStreak: number; totalXp: number; level: number };
+
 async function syncFromServer(): Promise<void> {
-  const [routines, completions] = await Promise.all([
+  const [routines, completions, userStats] = await Promise.all([
     api<Routine[]>("/api/routines"),
     api<Completion[]>("/api/completions?days=30"),
+    api<UserStats>("/api/user/stats"),
   ]);
 
   if (routines) saveToStorage(KEYS.routines, routines);
   if (completions) saveToStorage(KEYS.completions, completions);
+  
+  // Sync best streak from server (use max of local and server)
+  if (userStats) {
+    const localBest = getFromStorage<number>(KEYS.bestStreak, 0);
+    const serverBest = userStats.bestStreak || 0;
+    saveToStorage(KEYS.bestStreak, Math.max(localBest, serverBest));
+  }
+  
   localStorage.setItem(KEYS.lastSync, new Date().toISOString());
 }
 
 // Public sync function for after Google Sign-In on new device
 // Returns true if routines were restored from server
 export async function syncFromServerAfterGoogleSignIn(): Promise<boolean> {
-  const [routines, completions] = await Promise.all([
+  const [routines, completions, userStats] = await Promise.all([
     api<Routine[]>("/api/routines"),
     api<Completion[]>("/api/completions?days=30"),
+    api<UserStats>("/api/user/stats"),
   ]);
 
   const hasRoutines = routines && routines.length > 0;
@@ -158,24 +170,32 @@ export async function syncFromServerAfterGoogleSignIn(): Promise<boolean> {
     localStorage.setItem(KEYS.visited, "true");
   }
   if (completions) saveToStorage(KEYS.completions, completions);
+  
+  // Restore best streak from server
+  if (userStats) {
+    const localBest = getFromStorage<number>(KEYS.bestStreak, 0);
+    const serverBest = userStats.bestStreak || 0;
+    saveToStorage(KEYS.bestStreak, Math.max(localBest, serverBest));
+  }
+  
   localStorage.setItem(KEYS.lastSync, new Date().toISOString());
   
   return hasRoutines ?? false;
 }
 
+// Sync completions to server (routines are managed via direct API calls)
 async function syncToServer(): Promise<void> {
-  const routines = getFromStorage<Routine[]>(KEYS.routines, []);
   const completions = getFromStorage<Completion[]>(KEYS.completions, []);
 
   await api("/api/sync", {
     method: "POST",
-    body: JSON.stringify({ routines, completions }),
+    body: JSON.stringify({ completions }),
   });
 }
 
 // Background sync
 export function startBackgroundSync(): void {
-  // Sync every 5 minutes
+  // Sync completions every 5 minutes
   setInterval(() => {
     if (navigator.onLine) {
       syncToServer();
@@ -375,11 +395,16 @@ export const dashboardApi = {
       }
     }
 
-    // Persist best streak
+    // Persist best streak (local + server)
     const savedBestStreak = getFromStorage<number>(KEYS.bestStreak, 0);
     const bestStreak = Math.max(savedBestStreak, streak);
     if (bestStreak > savedBestStreak) {
       saveToStorage(KEYS.bestStreak, bestStreak);
+      // Sync to server in background
+      api("/api/user/stats", {
+        method: "PUT",
+        body: JSON.stringify({ bestStreak }),
+      });
     }
 
     // Weekly completion rate
