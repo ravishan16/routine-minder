@@ -13,6 +13,7 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, Di
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger } from "@/components/ui/alert-dialog";
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form";
 import { TimeCategoryBadge } from "@/components/time-category-badge";
+import { EmojiPicker, suggestEmoji } from "@/components/emoji-picker";
 import { useTheme } from "@/components/theme-provider";
 import { useToast } from "@/hooks/use-toast";
 import { queryClient } from "@/lib/queryClient";
@@ -28,6 +29,7 @@ const timeCategories = [
 
 const formSchema = CreateRoutineSchema.extend({
   name: z.string().min(1, "Routine name is required").max(100, "Name too long"),
+  icon: z.string().optional(),
 });
 
 type FormData = z.infer<typeof formSchema>;
@@ -44,6 +46,7 @@ function RoutineForm({ routine, onSubmit, onClose, isSubmitting }: RoutineFormPr
     resolver: zodResolver(formSchema),
     defaultValues: {
       name: routine?.name || "",
+      icon: routine?.icon || "✅",
       timeCategories: routine?.timeCategories || ["ALL"],
       notificationEnabled: routine?.notificationEnabled ?? false,
       notificationTime: routine?.notificationTime || "09:00",
@@ -52,6 +55,18 @@ function RoutineForm({ routine, onSubmit, onClose, isSubmitting }: RoutineFormPr
 
   const selectedCategories = form.watch("timeCategories");
   const notificationEnabled = form.watch("notificationEnabled");
+  const currentName = form.watch("name");
+  const currentIcon = form.watch("icon");
+
+  // Auto-suggest emoji when name changes
+  const handleNameBlur = () => {
+    if (currentIcon === "✅" && currentName.trim()) {
+      const suggested = suggestEmoji(currentName);
+      if (suggested !== "✅") {
+        form.setValue("icon", suggested);
+      }
+    }
+  };
 
   const toggleCategory = (id: "AM" | "NOON" | "PM" | "ALL") => {
     const current = form.getValues("timeCategories");
@@ -66,6 +81,7 @@ function RoutineForm({ routine, onSubmit, onClose, isSubmitting }: RoutineFormPr
   const handleFormSubmit = (data: FormData) => {
     onSubmit({
       ...data,
+      icon: data.icon || "✅",
       notificationTime: data.notificationEnabled ? data.notificationTime : undefined,
     });
   };
@@ -73,24 +89,42 @@ function RoutineForm({ routine, onSubmit, onClose, isSubmitting }: RoutineFormPr
   return (
     <Form {...form}>
       <form onSubmit={form.handleSubmit(handleFormSubmit)} className="space-y-6">
-        <FormField
-          control={form.control}
-          name="name"
-          render={({ field }) => (
-            <FormItem>
-              <FormLabel>Routine Name</FormLabel>
-              <FormControl>
-                <Input
-                  placeholder="e.g., Take Vitamins"
-                  data-testid="input-routine-name"
-                  autoFocus
-                  {...field}
-                />
-              </FormControl>
-              <FormMessage />
-            </FormItem>
-          )}
-        />
+        <div className="flex gap-3 items-start">
+          <FormField
+            control={form.control}
+            name="icon"
+            render={({ field }) => (
+              <FormItem>
+                <FormLabel>Icon</FormLabel>
+                <FormControl>
+                  <EmojiPicker value={field.value} onChange={field.onChange} />
+                </FormControl>
+              </FormItem>
+            )}
+          />
+          <FormField
+            control={form.control}
+            name="name"
+            render={({ field }) => (
+              <FormItem className="flex-1">
+                <FormLabel>Routine Name</FormLabel>
+                <FormControl>
+                  <Input
+                    placeholder="e.g., Take Vitamins"
+                    data-testid="input-routine-name"
+                    autoFocus
+                    {...field}
+                    onBlur={(e) => {
+                      field.onBlur();
+                      handleNameBlur();
+                    }}
+                  />
+                </FormControl>
+                <FormMessage />
+              </FormItem>
+            )}
+          />
+        </div>
 
         <div className="space-y-2">
           <FormLabel>Time of Day</FormLabel>
@@ -280,6 +314,7 @@ export default function RoutinesPage() {
               <div className="flex items-start justify-between gap-3">
                 <div className="flex-1 min-w-0">
                   <div className="flex items-center gap-2 mb-2">
+                    <span className="text-xl">{routine.icon || "✅"}</span>
                     <h3 className="font-semibold truncate" data-testid={`text-routine-name-${routine.id}`}>
                       {routine.name}
                     </h3>

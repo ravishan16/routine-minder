@@ -7,3 +7,8 @@ vite.config.ts.*
 .env
 .env.local
 .env.*.local
+client_secret_337973952566-nfnjdjiq0e05s9d3tj45hl4hprssi46k.apps.googleusercontent.com.json
+
+# Wrangler local state
+.wrangler/
+worker/.wrangler/

@@ -8,6 +8,7 @@ import { cors } from 'hono/cors';
 
 type Bindings = {
   DB: D1Database;
+  API_SECRET?: string;
 };
 
 const app = new Hono<{ Bindings: Bindings }>();
@@ -17,6 +18,24 @@ app.use('*', cors({
   origin: ['http://localhost:5173', 'https://routine-minder.ravishankars.com', 'https://routine-minder.pages.dev'],
   credentials: true,
 }));
+
+// API Key Protection Middleware (skip for health check)
+app.use('/api/*', async (c, next) => {
+  const apiSecret = c.env.API_SECRET;
+  
+  // Skip if no secret configured (development)
+  if (!apiSecret) {
+    await next();
+    return;
+  }
+  
+  const apiKey = c.req.header('X-API-Key');
+  if (apiKey !== apiSecret) {
+    return c.json({ error: 'Unauthorized - Invalid API key' }, 401);
+  }
+  
+  await next();
+});
 
 // Health check
 app.get('/', (c) => c.json({ status: 'ok', service: 'routine-minder-api' }));
@@ -49,6 +68,57 @@ app.post('/api/auth/device', async (c) => {
   return c.json({ userId: user.id, deviceId: user.device_id });
 });
 
+// Link device with Google account
+app.post('/api/auth/google', async (c) => {
+  const { idToken, deviceId } = await c.req.json();
+  
+  if (!idToken || !deviceId) {
+    return c.json({ error: 'idToken and deviceId required' }, 400);
+  }
+
+  try {
+    // Decode JWT (basic validation - in production, verify with Google's public keys)
+    const parts = idToken.split('.');
+    if (parts.length !== 3) {
+      return c.json({ error: 'Invalid token format' }, 400);
+    }
+
+    const payload = JSON.parse(atob(parts[1]));
+    const email = payload.email;
+    const googleId = payload.sub;
+
+    if (!email || !googleId) {
+      return c.json({ error: 'Invalid token payload' }, 400);
+    }
+
+    // Find user by device ID
+    const user = await c.env.DB.prepare(
+      'SELECT * FROM users WHERE device_id = ?'
+    ).bind(deviceId).first();
+
+    if (!user) {
+      return c.json({ error: 'Device not registered' }, 404);
+    }
+
+    // Update user with Google info
+    await c.env.DB.prepare(
+      'UPDATE users SET email = ?, google_id = ? WHERE id = ?'
+    ).bind(email, googleId, user.id).run();
+
+    // Check if there are other devices with the same email
+    const { results: otherDevices } = await c.env.DB.prepare(
+      'SELECT id FROM users WHERE email = ? AND id != ?'
+    ).bind(email, user.id).all();
+
+    // If other devices exist, merge their data (future enhancement)
+    const mergedCount = otherDevices.length;
+
+    return c.json({ success: true, email, mergedDevices: mergedCount });
+  } catch (error) {
+    return c.json({ error: 'Failed to process Google token' }, 500);
+  }
+});
+
 // ==================== ROUTINES ====================
 
 // Get all routines for user
@@ -63,6 +133,7 @@ app.get('/api/routines', async (c) => {
   return c.json(results.map(r => ({
     id: r.id,
     name: r.name,
+    icon: r.icon || '✅',
     timeCategories: JSON.parse(r.time_categories as string),
     isActive: !!r.is_active,
     sortOrder: r.sort_order,
@@ -75,7 +146,7 @@ app.post('/api/routines', async (c) => {
   const userId = c.req.header('X-User-Id');
   if (!userId) return c.json({ error: 'Unauthorized' }, 401);
 
-  const { name, timeCategories } = await c.req.json();
+  const { name, icon, timeCategories } = await c.req.json();
   const id = crypto.randomUUID();
 
   // Get max sort order
@@ -84,18 +155,19 @@ app.post('/api/routines', async (c) => {
   ).bind(userId).first();
 
   await c.env.DB.prepare(
-    'INSERT INTO routines (id, user_id, name, time_categories, is_active, sort_order, created_at) VALUES (?, ?, ?, ?, ?, ?, ?)'
+    'INSERT INTO routines (id, user_id, name, icon, time_categories, is_active, sort_order, created_at) VALUES (?, ?, ?, ?, ?, ?, ?, ?)'
   ).bind(
     id,
     userId,
     name,
+    icon || '✅',
     JSON.stringify(timeCategories),
     1,
     ((maxOrder?.max as number) || 0) + 1,
     new Date().toISOString()
   ).run();
 
-  return c.json({ id, name, timeCategories, isActive: true });
+  return c.json({ id, name, icon: icon || '✅', timeCategories, isActive: true });
 });
 
 // Update routine
@@ -112,6 +184,10 @@ app.put('/api/routines/:id', async (c) => {
   if (updates.name !== undefined) {
     sets.push('name = ?');
     values.push(updates.name);
+  }
+  if (updates.icon !== undefined) {
+    sets.push('icon = ?');
+    values.push(updates.icon);
   }
   if (updates.timeCategories !== undefined) {
     sets.push('time_categories = ?');

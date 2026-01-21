@@ -8,6 +8,7 @@ export type TimeCategory = z.infer<typeof TimeCategory>;
 export const RoutineSchema = z.object({
   id: z.string(),
   name: z.string().min(1, "Name is required"),
+  icon: z.string().optional().default("✅"),
   timeCategories: z.array(TimeCategory).min(1, "Select at least one time"),
   isActive: z.boolean(),
   sortOrder: z.number().optional(),
@@ -80,6 +81,7 @@ export function getAchievedMilestones(currentStreak: number): Milestone[] {
 // Create routine input
 export const CreateRoutineSchema = z.object({
   name: z.string().min(1, "Name is required"),
+  icon: z.string().optional(),
   timeCategories: z.array(TimeCategory).min(1, "Select at least one time"),
   notificationEnabled: z.boolean().optional(),
   notificationTime: z.string().optional(),

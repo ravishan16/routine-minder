@@ -128,6 +128,7 @@ export default function TodayPage() {
                 <RoutineCheckbox
                   key={`${routine.id}-${category}`}
                   label={routine.name}
+                  icon={routine.icon}
                   checked={isCompleted}
                   onChange={() =>
                     toggleMutation.mutate({

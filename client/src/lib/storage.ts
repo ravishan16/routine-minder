@@ -8,6 +8,9 @@ import type { Routine, Completion, Dashboard, TimeCategory } from "./schema";
 // API URL - Worker
 const API_URL = import.meta.env.VITE_API_URL || "https://routine-minder-api.ravishankar-sivasubramaniam.workers.dev";
 
+// API Key for protection (set in .env)
+const API_KEY = import.meta.env.VITE_API_KEY || "";
+
 // Storage keys
 const KEYS = {
   userId: "rm_userId",
@@ -64,6 +67,7 @@ async function api<T>(
       ...options,
       headers: {
         "Content-Type": "application/json",
+        ...(API_KEY ? { "X-API-Key": API_KEY } : {}),
         ...(userId ? { "X-User-Id": userId } : {}),
         ...options.headers,
       },
@@ -190,11 +194,12 @@ export const routinesApi = {
       });
   },
 
-  create: async (data: { name: string; timeCategories: TimeCategory[] }): Promise<Routine> => {
+  create: async (data: { name: string; icon?: string; timeCategories: TimeCategory[] }): Promise<Routine> => {
     const routines = getFromStorage<Routine[]>(KEYS.routines, []);
     const newRoutine: Routine = {
       id: crypto.randomUUID(),
       name: data.name,
+      icon: data.icon || "✅",
       timeCategories: data.timeCategories,
       isActive: true,
       sortOrder: routines.length,
@@ -353,4 +358,117 @@ export function hasVisited(): boolean {
 
 export function setVisited(): void {
   localStorage.setItem(KEYS.visited, "true");
+}
+
+// ==================== GOOGLE AUTH ====================
+
+// Google user type
+export type GoogleUser = {
+  uid: string;
+  email: string;
+  displayName: string;
+  photoURL: string | null;
+};
+
+const GOOGLE_USER_KEY = "rm_google_user";
+
+// Get stored Google user
+export async function getGoogleUser(): Promise<GoogleUser | null> {
+  try {
+    const stored = localStorage.getItem(GOOGLE_USER_KEY);
+    return stored ? JSON.parse(stored) : null;
+  } catch {
+    return null;
+  }
+}
+
+// Check if signed in with Google
+export function isGoogleSignedIn(): boolean {
+  return localStorage.getItem(GOOGLE_USER_KEY) !== null;
+}
+
+// Sign in with Google (using Google One Tap or popup)
+export async function signInWithGoogle(): Promise<GoogleUser> {
+  // Check if Google Identity Services is loaded
+  if (!window.google?.accounts?.id) {
+    throw new Error("Google Sign-In not loaded. Please try again.");
+  }
+
+  return new Promise((resolve, reject) => {
+    const clientId = import.meta.env.VITE_GOOGLE_CLIENT_ID;
+    
+    if (!clientId) {
+      reject(new Error("Google Client ID not configured"));
+      return;
+    }
+
+    window.google!.accounts.id.initialize({
+      client_id: clientId,
+      callback: async (response: { credential: string }) => {
+        try {
+          // Decode the JWT credential
+          const payload = JSON.parse(atob(response.credential.split(".")[1]));
+          
+          const user: GoogleUser = {
+            uid: payload.sub,
+            email: payload.email,
+            displayName: payload.name,
+            photoURL: payload.picture || null,
+          };
+
+          // Store user locally
+          localStorage.setItem(GOOGLE_USER_KEY, JSON.stringify(user));
+
+          // Link with server
+          await api("/api/auth/google", {
+            method: "POST",
+            body: JSON.stringify({
+              idToken: response.credential,
+              deviceId: getOrCreateDeviceId(),
+            }),
+          });
+
+          resolve(user);
+        } catch (error) {
+          reject(error);
+        }
+      },
+    });
+
+    // Prompt the user to sign in
+    window.google!.accounts.id.prompt((notification: { isNotDisplayed: () => boolean; isSkippedMoment: () => boolean }) => {
+      if (notification.isNotDisplayed() || notification.isSkippedMoment()) {
+        // Fall back to popup
+        window.google!.accounts.id.renderButton(
+          document.createElement("div"),
+          { theme: "outline", size: "large" }
+        );
+      }
+    });
+  });
+}
+
+// Sign out from Google
+export async function signOutGoogle(): Promise<void> {
+  localStorage.removeItem(GOOGLE_USER_KEY);
+  
+  if (window.google?.accounts?.id) {
+    window.google.accounts.id.disableAutoSelect();
+  }
+}
+
+// Declare Google global types
+declare global {
+  interface Window {
+    google?: {
+      accounts: {
+        id: {
+          initialize: (config: any) => void;
+          prompt: (callback?: (notification: any) => void) => void;
+          renderButton: (element: HTMLElement, options: any) => void;
+          disableAutoSelect: () => void;
+        };
+      };
+    };
+  }
 }

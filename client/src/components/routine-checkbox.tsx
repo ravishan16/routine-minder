@@ -5,11 +5,12 @@ type RoutineCheckboxProps = {
   checked: boolean;
   onChange: (checked: boolean) => void;
   label: string;
+  icon?: string;
   disabled?: boolean;
   testId?: string;
 };
 
-export function RoutineCheckbox({ checked, onChange, label, disabled, testId }: RoutineCheckboxProps) {
+export function RoutineCheckbox({ checked, onChange, label, icon, disabled, testId }: RoutineCheckboxProps) {
   return (
     <button
       data-testid={testId}
@@ -36,6 +37,7 @@ export function RoutineCheckbox({ checked, onChange, label, disabled, testId }: 
           checked ? "opacity-100 scale-100" : "opacity-0 scale-50"
         )} />
       </div>
+      {icon && <span className="text-xl flex-shrink-0">{icon}</span>}
       <span
         className={cn(
           "text-base font-medium transition-all duration-200 text-left",
