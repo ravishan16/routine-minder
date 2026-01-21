@@ -52,31 +52,8 @@ export type Dashboard = {
   weeklyCompletionRate: number;
 };
 
-// Routine stats for dashboard
-export type RoutineStats = {
-  routineId: string;
-  routineName: string;
-  currentStreak: number;
-  longestStreak: number;
-  completionRate: number;
-  achievedMilestones: number[];
-};
-
-// Milestones
-export const MILESTONES = [7, 21, 30, 50, 100, 365] as const;
-export type Milestone = (typeof MILESTONES)[number];
-
-// Helper functions for milestones
-export function getNextMilestone(currentStreak: number): Milestone | null {
-  for (const m of MILESTONES) {
-    if (currentStreak < m) return m;
-  }
-  return null;
-}
-
-export function getAchievedMilestones(currentStreak: number): Milestone[] {
-  return MILESTONES.filter((m) => currentStreak >= m);
-}
+// Note: Gamification types (RoutineStats, achievements, levels) 
+// are now in achievements.ts
 
 // Create routine input
 export const CreateRoutineSchema = z.object({

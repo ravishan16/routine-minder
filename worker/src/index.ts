@@ -163,13 +163,13 @@ app.post('/api/auth/google', async (c) => {
 
 // ==================== ROUTINES ====================
 
-// Get all routines for user
+// Get all routines for user (excludes soft-deleted)
 app.get('/api/routines', async (c) => {
   const userId = c.req.header('X-User-Id');
   if (!userId) return c.json({ error: 'Unauthorized' }, 401);
 
   const { results } = await c.env.DB.prepare(
-    'SELECT * FROM routines WHERE user_id = ? ORDER BY sort_order'
+    'SELECT * FROM routines WHERE user_id = ? AND (is_deleted = 0 OR is_deleted IS NULL) ORDER BY sort_order'
   ).bind(userId).all();
 
   return c.json(results.map(r => ({
@@ -257,22 +257,19 @@ app.put('/api/routines/:id', async (c) => {
   return c.json({ success: true });
 });
 
-// Delete routine
+// Soft-delete routine (preserves completion history)
 app.delete('/api/routines/:id', async (c) => {
   const userId = c.req.header('X-User-Id');
   if (!userId) return c.json({ error: 'Unauthorized' }, 401);
 
   const id = c.req.param('id');
 
+  // Soft delete - set is_deleted flag instead of removing
   await c.env.DB.prepare(
-    'DELETE FROM routines WHERE id = ? AND user_id = ?'
+    'UPDATE routines SET is_deleted = 1, is_active = 0 WHERE id = ? AND user_id = ?'
   ).bind(id, userId).run();
 
-  // Also delete completions
-  await c.env.DB.prepare(
-    'DELETE FROM completions WHERE routine_id = ?'
-  ).bind(id).run();
-
+  // Completions are preserved for historical stats!
   return c.json({ success: true });
 });
 
@@ -355,9 +352,9 @@ app.get('/api/dashboard', async (c) => {
 
   const today = new Date().toISOString().split('T')[0];
 
-  // Get active routines count
+  // Get active routines count (excluding deleted)
   const routineCount = await c.env.DB.prepare(
-    'SELECT COUNT(*) as count FROM routines WHERE user_id = ? AND is_active = 1'
+    'SELECT COUNT(*) as count FROM routines WHERE user_id = ? AND is_active = 1 AND (is_deleted = 0 OR is_deleted IS NULL)'
   ).bind(userId).first();
 
   // Get today's completions
@@ -390,6 +387,48 @@ app.get('/api/dashboard', async (c) => {
     currentStreak: streak,
     weeklyCompletionRate: 0, // Simplified
   });
+});
+
+// ==================== ACCOUNT MANAGEMENT ====================
+
+// Delete user account and all data (GDPR compliance)
+app.delete('/api/users/:userId', async (c) => {
+  const requestUserId = c.req.header('X-User-Id');
+  const targetUserId = c.req.param('userId');
+  
+  // Users can only delete their own account
+  if (!requestUserId || requestUserId !== targetUserId) {
+    return c.json({ error: 'Unauthorized' }, 401);
+  }
+
+  try {
+    // Delete all completions for user's routines
+    await c.env.DB.prepare(`
+      DELETE FROM completions WHERE routine_id IN (
+        SELECT id FROM routines WHERE user_id = ?
+      )
+    `).bind(targetUserId).run();
+
+    // Delete all routines
+    await c.env.DB.prepare(
+      'DELETE FROM routines WHERE user_id = ?'
+    ).bind(targetUserId).run();
+
+    // Delete achievements
+    await c.env.DB.prepare(
+      'DELETE FROM achievements WHERE user_id = ?'
+    ).bind(targetUserId).run();
+
+    // Delete user
+    await c.env.DB.prepare(
+      'DELETE FROM users WHERE id = ?'
+    ).bind(targetUserId).run();
+
+    return c.json({ success: true, message: 'Account deleted successfully' });
+  } catch (error) {
+    console.error('Account deletion error:', error);
+    return c.json({ error: 'Failed to delete account' }, 500);
+  }
 });
 
 // ==================== SYNC ====================

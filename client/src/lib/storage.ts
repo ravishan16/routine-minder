@@ -20,6 +20,7 @@ const KEYS = {
   lastSync: "rm_lastSync",
   onboarded: "rm_onboarded",
   visited: "rm_visited",
+  bestStreak: "rm_bestStreak",
 };
 
 // Generate device ID
@@ -262,11 +263,10 @@ export const routinesApi = {
     const filtered = routines.filter((r) => r.id !== id);
     saveToStorage(KEYS.routines, filtered);
 
-    // Also remove completions for this routine
-    const completions = getFromStorage<Completion[]>(KEYS.completions, []);
-    saveToStorage(KEYS.completions, completions.filter((c) => c.routineId !== id));
+    // KEEP completions for historical stats! Don't delete them.
+    // The server soft-deletes, so history is preserved.
 
-    // Sync to server
+    // Sync to server (server will soft-delete)
     api(`/api/routines/${id}`, { method: "DELETE" });
   },
 };
@@ -341,11 +341,18 @@ export const dashboardApi = {
       }
     }
 
+    // Persist best streak
+    const savedBestStreak = getFromStorage<number>(KEYS.bestStreak, 0);
+    const bestStreak = Math.max(savedBestStreak, streak);
+    if (bestStreak > savedBestStreak) {
+      saveToStorage(KEYS.bestStreak, bestStreak);
+    }
+
     // Weekly completion rate
     const weekAgo = new Date();
     weekAgo.setDate(weekAgo.getDate() - 7);
     const weekCompletions = completions.filter((c) => c.date >= formatDate(weekAgo));
-    const weeklyExpected = activeRoutines.length * 7;
+    const weeklyExpected = activeRoutines.reduce((sum, r) => sum + r.timeCategories.length, 0) * 7;
     const weeklyRate = weeklyExpected > 0 ? Math.round((weekCompletions.length / weeklyExpected) * 100) : 0;
 
     return {
@@ -353,9 +360,19 @@ export const dashboardApi = {
       completedToday: todaysCompletions.length,
       totalToday: activeRoutines.reduce((sum, r) => sum + r.timeCategories.length, 0),
       currentStreak: streak,
-      bestStreak: streak,
+      bestStreak,
       weeklyCompletionRate: weeklyRate,
     };
+  },
+
+  // Get all completions for gamification
+  getAllCompletions: async (): Promise<Completion[]> => {
+    return getFromStorage<Completion[]>(KEYS.completions, []);
+  },
+
+  // Get saved best streak
+  getBestStreak: (): number => {
+    return getFromStorage<number>(KEYS.bestStreak, 0);
   },
 };
 
@@ -527,6 +544,22 @@ export async function signOutGoogle(): Promise<void> {
   if (window.google?.accounts?.id) {
     window.google.accounts.id.disableAutoSelect();
   }
+}
+
+// Delete entire account (server + local)
+export async function deleteAccount(): Promise<boolean> {
+  const userId = getUserId();
+  if (!userId) return false;
+
+  // Delete from server
+  const result = await api<{ success: boolean }>(`/api/users/${userId}`, {
+    method: "DELETE",
+  });
+
+  // Clear all local data regardless of server result
+  localStorage.clear();
+  
+  return result?.success ?? false;
 }
 
 // Declare Google global types

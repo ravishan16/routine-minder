@@ -1,15 +1,26 @@
 import { useState } from "react";
 import { useQuery, useMutation } from "@tanstack/react-query";
-import { Bell, Sun, Moon, Download, Upload, Trash2, User, LogOut, Smartphone, Share2 } from "lucide-react";
+import { Bell, Sun, Moon, Download, Upload, Trash2, User, LogOut, Smartphone, Share2, AlertTriangle } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { Switch } from "@/components/ui/switch";
 import { Separator } from "@/components/ui/separator";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+  AlertDialogTrigger,
+} from "@/components/ui/alert-dialog";
 import { useTheme } from "@/components/theme-provider";
 import { useToast } from "@/hooks/use-toast";
 import { queryClient } from "@/lib/queryClient";
-import { settingsApi, getGoogleUser, signInWithGoogle, signOutGoogle } from "@/lib/storage";
+import { settingsApi, getGoogleUser, signInWithGoogle, signOutGoogle, deleteAccount } from "@/lib/storage";
 import { exportData, importData, type ExportFormat, type ExportRange } from "@/lib/export";
 import { requestNotificationPermission, subscribeToPushNotifications, isPushSupported } from "@/lib/notifications";
 import type { Settings } from "@/lib/schema";
@@ -21,6 +32,7 @@ export default function SettingsPage() {
   const [exportRange, setExportRange] = useState<ExportRange>("all");
   const [isExporting, setIsExporting] = useState(false);
   const [isImporting, setIsImporting] = useState(false);
+  const [isDeleting, setIsDeleting] = useState(false);
 
   const { data: settings, isLoading } = useQuery<Settings>({
     queryKey: ["settings"],
@@ -125,6 +137,28 @@ export default function SettingsPage() {
     if (confirm("Are you sure you want to clear all data? This cannot be undone.")) {
       localStorage.clear();
       window.location.reload();
+    }
+  };
+
+  const handleDeleteAccount = async () => {
+    setIsDeleting(true);
+    try {
+      const success = await deleteAccount();
+      if (success) {
+        toast({ title: "Account deleted successfully" });
+        window.location.reload();
+      } else {
+        // Still clear local data even if server delete fails
+        toast({ 
+          title: "Account data cleared",
+          description: "Local data cleared. Server data may persist."
+        });
+        window.location.reload();
+      }
+    } catch {
+      toast({ title: "Failed to delete account", variant: "destructive" });
+    } finally {
+      setIsDeleting(false);
     }
   };
 
@@ -351,13 +385,67 @@ export default function SettingsPage() {
           <Trash2 className="h-4 w-4" />
           Danger Zone
         </h2>
-        <p className="text-sm text-muted-foreground">
-          Clear all local data. This cannot be undone.
-        </p>
-        <Button variant="destructive" onClick={handleClearData} className="w-full">
-          <Trash2 className="h-4 w-4 mr-2" />
-          Clear All Data
-        </Button>
+        <Separator />
+        
+        {/* Clear Local Data */}
+        <div className="space-y-2">
+          <p className="text-sm font-medium">Clear Local Data</p>
+          <p className="text-xs text-muted-foreground">
+            Remove all data from this device. Server data remains intact.
+          </p>
+          <Button variant="outline" onClick={handleClearData} className="w-full">
+            <Trash2 className="h-4 w-4 mr-2" />
+            Clear Local Data
+          </Button>
+        </div>
+        
+        <Separator />
+        
+        {/* Delete Account */}
+        <div className="space-y-2">
+          <p className="text-sm font-medium">Delete Account</p>
+          <p className="text-xs text-muted-foreground">
+            Permanently delete your account and all data from our servers. This action cannot be undone.
+          </p>
+          <AlertDialog>
+            <AlertDialogTrigger asChild>
+              <Button variant="destructive" className="w-full">
+                <AlertTriangle className="h-4 w-4 mr-2" />
+                Delete Account
+              </Button>
+            </AlertDialogTrigger>
+            <AlertDialogContent>
+              <AlertDialogHeader>
+                <AlertDialogTitle className="flex items-center gap-2">
+                  <AlertTriangle className="h-5 w-5 text-destructive" />
+                  Delete Account?
+                </AlertDialogTitle>
+                <AlertDialogDescription>
+                  This will permanently delete:
+                  <ul className="list-disc list-inside mt-2 space-y-1">
+                    <li>All your routines</li>
+                    <li>All completion history</li>
+                    <li>All achievements and progress</li>
+                    <li>Your account information</li>
+                  </ul>
+                  <p className="mt-3 font-medium text-destructive">
+                    This action cannot be undone.
+                  </p>
+                </AlertDialogDescription>
+              </AlertDialogHeader>
+              <AlertDialogFooter>
+                <AlertDialogCancel>Cancel</AlertDialogCancel>
+                <AlertDialogAction
+                  onClick={handleDeleteAccount}
+                  disabled={isDeleting}
+                  className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+                >
+                  {isDeleting ? "Deleting..." : "Yes, Delete Everything"}
+                </AlertDialogAction>
+              </AlertDialogFooter>
+            </AlertDialogContent>
+          </AlertDialog>
+        </div>
       </Card>
 
       {/* About */}

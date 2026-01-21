@@ -8,13 +8,15 @@ A simple, privacy-focused daily habit tracker PWA with offline-first architectur
 ## Features
 
 - ✅ **Daily Routine Tracking** - Check off routines by time of day (AM/Noon/PM/All Day)
-- 🚀 **Onboarding Flow** - Quick start with preset routines (Hydration, Vitamins, Journaling, etc.)
-- 🔥 **Streak Tracking** - Build momentum with daily streaks
-- 📊 **Dashboard** - View completion rates and progress over time
-- 🌙 **Dark Mode** - Easy on the eyes
+- � **Google Sign-In** - Cross-device sync with your Google account
+- 🎮 **Gamification** - XP, levels, achievements, and streak multipliers
+- 🔥 **Streak Tracking** - Build momentum with daily streaks and personal bests
+- 📊 **Dashboard** - View completion rates, achievements, and per-routine stats
+- 🏆 **Achievements** - Unlock badges for milestones (7/21/30/100/365-day streaks)
+- 🌙 **Dark Mode** - Warm coral/teal theme with dark mode support
 - 📱 **PWA** - Install on iPhone/Android like a native app
 - 📴 **Offline-First** - Works without internet, syncs when connected
-- 🔐 **Privacy-First** - Device-based authentication, no account required
+- 🔐 **Privacy-First** - Your data stays yours, delete account anytime
 
 ## Architecture
 
@@ -152,19 +154,23 @@ routine-minder/
 │   └── src/
 │       ├── components/      # UI components
 │       │   ├── ui/          # shadcn/ui primitives
-│       │   ├── onboarding.tsx
+│       │   ├── landing-page.tsx
 │       │   ├── error-boundary.tsx
 │       │   └── ...
 │       ├── hooks/           # React hooks
 │       ├── lib/             # Core logic
 │       │   ├── storage.ts   # localStorage + API sync
 │       │   ├── schema.ts    # TypeScript types
+│       │   ├── achievements.ts # Gamification system
 │       │   └── utils.ts     # Utilities
 │       └── pages/           # Page components
 │           ├── today.tsx    # Main daily view
-│           ├── dashboard.tsx
+│           ├── dashboard.tsx # Gamified dashboard
 │           ├── routines.tsx
-│           └── settings.tsx
+│           ├── settings.tsx
+│           ├── privacy.tsx  # Privacy policy
+│           ├── terms.tsx    # Terms of service
+│           └── about.tsx    # Features & install
 ├── worker/                  # Cloudflare Worker API
 │   ├── src/
 │   │   └── index.ts         # Hono API routes
@@ -182,14 +188,16 @@ routine-minder/
 | Method | Endpoint | Description |
 |--------|----------|-------------|
 | POST | `/api/auth/device` | Register device & get user ID |
+| POST | `/api/auth/google` | Google sign-in & cross-device sync |
 | GET | `/api/routines` | List all routines |
 | POST | `/api/routines` | Create a routine |
 | PUT | `/api/routines/:id` | Update a routine |
-| DELETE | `/api/routines/:id` | Delete a routine |
+| DELETE | `/api/routines/:id` | Soft-delete a routine (preserves history) |
 | GET | `/api/completions` | Get completions (with ?date or ?days) |
 | POST | `/api/completions/toggle` | Toggle completion status |
 | GET | `/api/dashboard` | Get dashboard statistics |
 | POST | `/api/sync` | Bulk sync from localStorage |
+| DELETE | `/api/users/:userId` | Delete account and all data |
 
 ## How It Works
 
@@ -205,19 +213,14 @@ routine-minder/
 1. First visit generates a unique device ID (UUID)
 2. Device ID is sent to API to create/retrieve user
 3. User ID stored in localStorage for subsequent requests
-4. No passwords, no accounts - just your device
+4. Sign in with Google to enable cross-device sync
 
-### Onboarding Flow
+### Cross-Device Sync
 
-New users are presented with preset routines:
-- 💧 Hydration (AM/Noon/PM)
-- 💊 Vitamins (AM/PM)
-- 📖 Journaling (PM)
-- 🏋️ Exercise (AM)
-- 🧘 Meditation (AM/PM)
-- 🎵 Music Practice (PM)
-
-Users can select which to start with or skip and add their own.
+1. Sign in with Google on any device
+2. Server looks up user by Google ID
+3. Returns same user ID across all devices
+4. Data syncs automatically via background sync
 
 ## Tech Stack
 
@@ -241,9 +244,12 @@ Update these files:
 - `client/public/icons/icon.svg` - App icon
 - `client/index.html` - Title and meta tags
 
-### Preset Routines
+### Achievement System
 
-Edit `client/src/components/onboarding.tsx` to customize the preset routines offered during onboarding.
+Edit `client/src/lib/achievements.ts` to customize:
+- XP per completion and streak multipliers
+- Level thresholds and names
+- Achievement badges and requirements
 
 ### API URL
 
