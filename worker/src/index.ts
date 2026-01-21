@@ -68,12 +68,14 @@ app.post('/api/auth/device', async (c) => {
   return c.json({ userId: user.id, deviceId: user.device_id });
 });
 
-// Link device with Google account
+// Link device with Google account - PRIMARY AUTH METHOD
+// If google_id exists, return that user (cross-device sync)
+// If new google_id, create user or link to existing device user
 app.post('/api/auth/google', async (c) => {
   const { idToken, deviceId } = await c.req.json();
   
-  if (!idToken || !deviceId) {
-    return c.json({ error: 'idToken and deviceId required' }, 400);
+  if (!idToken) {
+    return c.json({ error: 'idToken required' }, 400);
   }
 
   try {
@@ -86,35 +88,75 @@ app.post('/api/auth/google', async (c) => {
     const payload = JSON.parse(atob(parts[1]));
     const email = payload.email;
     const googleId = payload.sub;
+    const displayName = payload.name || email.split('@')[0];
+    const photoUrl = payload.picture || null;
 
     if (!email || !googleId) {
       return c.json({ error: 'Invalid token payload' }, 400);
     }
 
-    // Find user by device ID
-    const user = await c.env.DB.prepare(
-      'SELECT * FROM users WHERE device_id = ?'
-    ).bind(deviceId).first();
+    // FIRST: Check if user with this google_id already exists (cross-device sync!)
+    let existingUser = await c.env.DB.prepare(
+      'SELECT * FROM users WHERE google_id = ?'
+    ).bind(googleId).first();
 
-    if (!user) {
-      return c.json({ error: 'Device not registered' }, 404);
+    if (existingUser) {
+      // User exists! Return their userId for sync
+      // Update profile info in case it changed
+      await c.env.DB.prepare(
+        'UPDATE users SET email = ?, display_name = ?, photo_url = ? WHERE id = ?'
+      ).bind(email, displayName, photoUrl, existingUser.id).run();
+
+      return c.json({ 
+        userId: existingUser.id, 
+        email, 
+        displayName,
+        photoUrl,
+        isNewUser: false,
+        message: 'Welcome back! Your data will sync.'
+      });
     }
 
-    // Update user with Google info
-    await c.env.DB.prepare(
-      'UPDATE users SET email = ?, google_id = ? WHERE id = ?'
-    ).bind(email, googleId, user.id).run();
+    // NEW Google user - check if device already has an anonymous user
+    let userId: string;
+    
+    if (deviceId) {
+      const deviceUser = await c.env.DB.prepare(
+        'SELECT * FROM users WHERE device_id = ?'
+      ).bind(deviceId).first();
 
-    // Check if there are other devices with the same email
-    const { results: otherDevices } = await c.env.DB.prepare(
-      'SELECT id FROM users WHERE email = ? AND id != ?'
-    ).bind(email, user.id).all();
+      if (deviceUser && !deviceUser.google_id) {
+        // Link Google to existing anonymous device user
+        await c.env.DB.prepare(
+          'UPDATE users SET email = ?, google_id = ?, display_name = ?, photo_url = ? WHERE id = ?'
+        ).bind(email, googleId, displayName, photoUrl, deviceUser.id).run();
+        
+        userId = deviceUser.id as string;
+      } else {
+        // Create new user with Google info
+        userId = crypto.randomUUID();
+        await c.env.DB.prepare(
+          'INSERT INTO users (id, device_id, email, google_id, display_name, photo_url, created_at) VALUES (?, ?, ?, ?, ?, ?, ?)'
+        ).bind(userId, deviceId, email, googleId, displayName, photoUrl, new Date().toISOString()).run();
+      }
+    } else {
+      // No deviceId - create new user with Google info only
+      userId = crypto.randomUUID();
+      await c.env.DB.prepare(
+        'INSERT INTO users (id, device_id, email, google_id, display_name, photo_url, created_at) VALUES (?, ?, ?, ?, ?, ?, ?)'
+      ).bind(userId, `google_${googleId}`, email, googleId, displayName, photoUrl, new Date().toISOString()).run();
+    }
 
-    // If other devices exist, merge their data (future enhancement)
-    const mergedCount = otherDevices.length;
-
-    return c.json({ success: true, email, mergedDevices: mergedCount });
+    return c.json({ 
+      userId, 
+      email, 
+      displayName,
+      photoUrl,
+      isNewUser: true,
+      message: 'Account created! Start adding routines.'
+    });
   } catch (error) {
+    console.error('Google auth error:', error);
     return c.json({ error: 'Failed to process Google token' }, 500);
   }
 });

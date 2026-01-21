@@ -1,21 +1,25 @@
 import { useEffect, useState } from "react";
-import { Switch, Route } from "wouter";
+import { Switch, Route, useLocation } from "wouter";
 import { queryClient } from "./lib/queryClient";
-import { QueryClientProvider, useQuery, useMutation } from "@tanstack/react-query";
+import { QueryClientProvider } from "@tanstack/react-query";
 import { Toaster } from "@/components/ui/toaster";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import { ThemeProvider } from "@/components/theme-provider";
 import { ErrorBoundary } from "@/components/error-boundary";
 import { BottomNav } from "@/components/bottom-nav";
-import { Onboarding } from "@/components/onboarding";
 import { LandingPage } from "@/components/landing-page";
 import TodayPage from "@/pages/today";
 import RoutinesPage from "@/pages/routines";
 import DashboardPage from "@/pages/dashboard";
 import SettingsPage from "@/pages/settings";
+import PrivacyPage from "@/pages/privacy";
+import TermsPage from "@/pages/terms";
+import AboutPage from "@/pages/about";
 import NotFound from "@/pages/not-found";
-import { initAuth, startBackgroundSync, routinesApi, isOnboarded, setOnboarded, hasVisited, setVisited } from "@/lib/storage";
-import type { TimeCategory } from "@/lib/schema";
+import { initAuth, startBackgroundSync, hasVisited, setVisited } from "@/lib/storage";
+
+// Public pages that don't require auth
+const PUBLIC_ROUTES = ["/privacy", "/terms", "/about"];
 
 function Router() {
   return (
@@ -29,35 +33,31 @@ function Router() {
   );
 }
 
+function PublicRouter() {
+  return (
+    <Switch>
+      <Route path="/privacy" component={PrivacyPage} />
+      <Route path="/terms" component={TermsPage} />
+      <Route path="/about" component={AboutPage} />
+    </Switch>
+  );
+}
+
 function AppContent() {
+  const [location] = useLocation();
   const [showLanding, setShowLanding] = useState(!hasVisited());
   
-  const { data: routines, isLoading } = useQuery({
-    queryKey: ["routines"],
-    queryFn: routinesApi.getAll,
-  });
-
-  const createRoutinesMutation = useMutation({
-    mutationFn: async (routinesToCreate: { name: string; timeCategories: TimeCategory[] }[]) => {
-      for (const routine of routinesToCreate) {
-        await routinesApi.create(routine);
-      }
-      setOnboarded();
-    },
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["routines"] });
-    },
-  });
+  // Check if current route is a public page
+  const isPublicRoute = PUBLIC_ROUTES.includes(location);
+  
+  // Public routes render without landing check
+  if (isPublicRoute) {
+    return <PublicRouter />;
+  }
 
   const handleGetStarted = () => {
     setVisited();
     setShowLanding(false);
-  };
-
-  // Handle successful Google restore from onboarding
-  const handleGoogleSignIn = () => {
-    queryClient.invalidateQueries({ queryKey: ["routines"] });
-    setOnboarded();
   };
 
   // Show landing page for first-time visitors
@@ -65,27 +65,7 @@ function AppContent() {
     return <LandingPage onGetStarted={handleGetStarted} />;
   }
 
-  // Show onboarding if no routines and not yet onboarded
-  const showOnboarding = !isLoading && (!routines || routines.length === 0) && !isOnboarded();
-
-  if (isLoading) {
-    return (
-      <div className="min-h-screen flex items-center justify-center">
-        <div className="animate-pulse text-muted-foreground">Loading...</div>
-      </div>
-    );
-  }
-
-  if (showOnboarding) {
-    return (
-      <Onboarding
-        onComplete={createRoutinesMutation.mutate}
-        onGoogleSignIn={handleGoogleSignIn}
-        isLoading={createRoutinesMutation.isPending}
-      />
-    );
-  }
-
+  // Go directly to app - Today page shows empty state if no routines
   return (
     <div className="min-h-screen bg-background max-w-lg mx-auto relative pb-20">
       <Router />

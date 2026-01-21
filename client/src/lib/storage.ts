@@ -416,7 +416,8 @@ export function isGoogleSignedIn(): boolean {
 }
 
 // Sign in with Google (using Google One Tap or popup)
-export async function signInWithGoogle(): Promise<GoogleUser> {
+// This is the PRIMARY auth method - returns existing user data for cross-device sync
+export async function signInWithGoogle(): Promise<GoogleUser & { isNewUser: boolean }> {
   // Check if Google Identity Services is loaded
   if (!window.google?.accounts?.id) {
     throw new Error("Google Sign-In not loaded. Please try again.");
@@ -434,21 +435,18 @@ export async function signInWithGoogle(): Promise<GoogleUser> {
       client_id: clientId,
       callback: async (response: { credential: string }) => {
         try {
-          // Decode the JWT credential
+          // Decode the JWT credential for local user info
           const payload = JSON.parse(atob(response.credential.split(".")[1]));
           
-          const user: GoogleUser = {
-            uid: payload.sub,
-            email: payload.email,
-            displayName: payload.name,
-            photoURL: payload.picture || null,
-          };
-
-          // Store user locally
-          localStorage.setItem(GOOGLE_USER_KEY, JSON.stringify(user));
-
-          // Link with server
-          await api("/api/auth/google", {
+          // Call server - this will lookup by google_id first for cross-device sync
+          const result = await api<{
+            userId: string;
+            email: string;
+            displayName: string;
+            photoUrl: string | null;
+            isNewUser: boolean;
+            message: string;
+          }>("/api/auth/google", {
             method: "POST",
             body: JSON.stringify({
               idToken: response.credential,
@@ -456,7 +454,32 @@ export async function signInWithGoogle(): Promise<GoogleUser> {
             }),
           });
 
-          resolve(user);
+          if (!result) {
+            throw new Error("Failed to authenticate with server");
+          }
+
+          // Store the userId from server - this is the KEY for cross-device sync
+          localStorage.setItem(KEYS.userId, result.userId);
+
+          const user: GoogleUser = {
+            uid: payload.sub,
+            email: result.email,
+            displayName: result.displayName,
+            photoURL: result.photoUrl,
+          };
+
+          // Store user locally
+          localStorage.setItem(GOOGLE_USER_KEY, JSON.stringify(user));
+
+          // If returning user (not new), sync their data from server
+          if (!result.isNewUser) {
+            await syncFromServer();
+          }
+
+          // Mark as visited since they've authenticated
+          localStorage.setItem(KEYS.visited, "true");
+
+          resolve({ ...user, isNewUser: result.isNewUser });
         } catch (error) {
           reject(error);
         }
@@ -466,11 +489,32 @@ export async function signInWithGoogle(): Promise<GoogleUser> {
     // Prompt the user to sign in
     window.google!.accounts.id.prompt((notification: { isNotDisplayed: () => boolean; isSkippedMoment: () => boolean }) => {
       if (notification.isNotDisplayed() || notification.isSkippedMoment()) {
-        // Fall back to popup
-        window.google!.accounts.id.renderButton(
-          document.createElement("div"),
-          { theme: "outline", size: "large" }
-        );
+        // Fall back to popup - create visible button
+        const buttonContainer = document.createElement("div");
+        buttonContainer.id = "google-signin-fallback";
+        buttonContainer.style.position = "fixed";
+        buttonContainer.style.top = "50%";
+        buttonContainer.style.left = "50%";
+        buttonContainer.style.transform = "translate(-50%, -50%)";
+        buttonContainer.style.zIndex = "9999";
+        buttonContainer.style.padding = "20px";
+        buttonContainer.style.background = "white";
+        buttonContainer.style.borderRadius = "12px";
+        buttonContainer.style.boxShadow = "0 4px 20px rgba(0,0,0,0.15)";
+        document.body.appendChild(buttonContainer);
+        
+        window.google!.accounts.id.renderButton(buttonContainer, { 
+          theme: "outline", 
+          size: "large",
+          text: "signin_with",
+          shape: "rectangular"
+        });
+        
+        // Clean up after a delay
+        setTimeout(() => {
+          const el = document.getElementById("google-signin-fallback");
+          if (el) el.remove();
+        }, 60000);
       }
     });
   });
