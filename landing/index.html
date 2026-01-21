@@ -1,0 +1,439 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Routine Minder - Daily Habit Tracker</title>
+  <meta name="description" content="A simple, privacy-focused daily habit tracker. Track routines, build streaks, and store data in your own Google Sheet.">
+  <meta name="theme-color" content="#5B7C99">
+  
+  <!-- Open Graph -->
+  <meta property="og:title" content="Routine Minder">
+  <meta property="og:description" content="Track your daily routines and build healthy habits">
+  <meta property="og:type" content="website">
+  
+  <!-- Fonts -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+  
+  <!-- QR Code Library -->
+  <script src="https://cdn.jsdelivr.net/npm/qrcode@1.5.3/build/qrcode.min.js"></script>
+  
+  <style>
+    :root {
+      --primary: #5B7C99;
+      --primary-dark: #4a6b88;
+      --bg: #ffffff;
+      --bg-secondary: #f8fafc;
+      --text: #1e293b;
+      --text-muted: #64748b;
+      --border: #e2e8f0;
+      --success: #10b981;
+    }
+    
+    @media (prefers-color-scheme: dark) {
+      :root {
+        --bg: #0f172a;
+        --bg-secondary: #1e293b;
+        --text: #f1f5f9;
+        --text-muted: #94a3b8;
+        --border: #334155;
+      }
+    }
+    
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+    }
+    
+    body {
+      font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+      background: var(--bg);
+      color: var(--text);
+      line-height: 1.6;
+      min-height: 100vh;
+    }
+    
+    .container {
+      max-width: 640px;
+      margin: 0 auto;
+      padding: 2rem 1.5rem;
+    }
+    
+    header {
+      text-align: center;
+      margin-bottom: 3rem;
+    }
+    
+    .logo {
+      width: 80px;
+      height: 80px;
+      background: var(--primary);
+      border-radius: 20px;
+      margin: 0 auto 1.5rem;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+    
+    .logo svg {
+      width: 48px;
+      height: 48px;
+    }
+    
+    h1 {
+      font-size: 2rem;
+      font-weight: 700;
+      margin-bottom: 0.5rem;
+    }
+    
+    .tagline {
+      color: var(--text-muted);
+      font-size: 1.1rem;
+    }
+    
+    .qr-section {
+      background: var(--bg-secondary);
+      border: 1px solid var(--border);
+      border-radius: 16px;
+      padding: 2rem;
+      text-align: center;
+      margin-bottom: 2rem;
+    }
+    
+    #qrcode {
+      margin: 1.5rem auto;
+      padding: 1rem;
+      background: white;
+      border-radius: 12px;
+      display: inline-block;
+    }
+    
+    .qr-section h2 {
+      font-size: 1.25rem;
+      margin-bottom: 0.5rem;
+    }
+    
+    .qr-section p {
+      color: var(--text-muted);
+      font-size: 0.9rem;
+    }
+    
+    .app-url {
+      background: var(--bg);
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      padding: 0.75rem 1rem;
+      font-family: monospace;
+      font-size: 0.875rem;
+      color: var(--primary);
+      word-break: break-all;
+      margin-top: 1rem;
+    }
+    
+    .install-section {
+      margin-bottom: 2rem;
+    }
+    
+    .install-section h2 {
+      font-size: 1.25rem;
+      margin-bottom: 1rem;
+      display: flex;
+      align-items: center;
+      gap: 0.5rem;
+    }
+    
+    .platform-tabs {
+      display: flex;
+      gap: 0.5rem;
+      margin-bottom: 1rem;
+    }
+    
+    .tab {
+      flex: 1;
+      padding: 0.75rem 1rem;
+      border: 1px solid var(--border);
+      background: var(--bg-secondary);
+      border-radius: 8px;
+      cursor: pointer;
+      font-weight: 500;
+      transition: all 0.2s;
+    }
+    
+    .tab:hover {
+      border-color: var(--primary);
+    }
+    
+    .tab.active {
+      background: var(--primary);
+      color: white;
+      border-color: var(--primary);
+    }
+    
+    .instructions {
+      background: var(--bg-secondary);
+      border: 1px solid var(--border);
+      border-radius: 12px;
+      padding: 1.5rem;
+    }
+    
+    .step {
+      display: flex;
+      gap: 1rem;
+      margin-bottom: 1rem;
+    }
+    
+    .step:last-child {
+      margin-bottom: 0;
+    }
+    
+    .step-number {
+      width: 28px;
+      height: 28px;
+      background: var(--primary);
+      color: white;
+      border-radius: 50%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 0.875rem;
+      font-weight: 600;
+      flex-shrink: 0;
+    }
+    
+    .step-content h3 {
+      font-size: 1rem;
+      margin-bottom: 0.25rem;
+    }
+    
+    .step-content p {
+      color: var(--text-muted);
+      font-size: 0.875rem;
+    }
+    
+    .features {
+      display: grid;
+      grid-template-columns: repeat(2, 1fr);
+      gap: 1rem;
+      margin-bottom: 2rem;
+    }
+    
+    .feature {
+      background: var(--bg-secondary);
+      border: 1px solid var(--border);
+      border-radius: 12px;
+      padding: 1.25rem;
+    }
+    
+    .feature-icon {
+      width: 40px;
+      height: 40px;
+      background: var(--primary);
+      border-radius: 10px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      margin-bottom: 0.75rem;
+    }
+    
+    .feature h3 {
+      font-size: 0.95rem;
+      margin-bottom: 0.25rem;
+    }
+    
+    .feature p {
+      color: var(--text-muted);
+      font-size: 0.8rem;
+    }
+    
+    .cta-button {
+      display: block;
+      width: 100%;
+      padding: 1rem 2rem;
+      background: var(--primary);
+      color: white;
+      text-decoration: none;
+      border-radius: 12px;
+      font-weight: 600;
+      font-size: 1.1rem;
+      text-align: center;
+      transition: background 0.2s;
+      margin-bottom: 2rem;
+    }
+    
+    .cta-button:hover {
+      background: var(--primary-dark);
+    }
+    
+    footer {
+      text-align: center;
+      color: var(--text-muted);
+      font-size: 0.875rem;
+      padding-top: 2rem;
+      border-top: 1px solid var(--border);
+    }
+    
+    footer a {
+      color: var(--primary);
+      text-decoration: none;
+    }
+    
+    footer a:hover {
+      text-decoration: underline;
+    }
+    
+    .hidden {
+      display: none;
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <header>
+      <div class="logo">
+        <svg viewBox="0 0 48 48" fill="none" xmlns="http://www.w3.org/2000/svg">
+          <circle cx="24" cy="24" r="18" stroke="white" stroke-width="3" fill="none"/>
+          <path d="M14 24l7 7 13-13" stroke="white" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"/>
+        </svg>
+      </div>
+      <h1>Routine Minder</h1>
+      <p class="tagline">Track your daily routines & build healthy habits</p>
+    </header>
+
+    <a href="https://routine-minder.pages.dev" class="cta-button" id="openApp">
+      Open App →
+    </a>
+
+    <div class="qr-section">
+      <h2>📱 Scan to Install</h2>
+      <p>Scan with your phone camera to open the app</p>
+      <div id="qrcode"></div>
+      <div class="app-url" id="appUrl">https://routine-minder.pages.dev</div>
+    </div>
+
+    <div class="install-section">
+      <h2>📲 Install as App</h2>
+      
+      <div class="platform-tabs">
+        <button class="tab active" onclick="showPlatform('ios')">iPhone / iPad</button>
+        <button class="tab" onclick="showPlatform('android')">Android</button>
+      </div>
+      
+      <div id="ios-instructions" class="instructions">
+        <div class="step">
+          <div class="step-number">1</div>
+          <div class="step-content">
+            <h3>Open in Safari</h3>
+            <p>Scan the QR code or tap "Open App" above using Safari browser</p>
+          </div>
+        </div>
+        <div class="step">
+          <div class="step-number">2</div>
+          <div class="step-content">
+            <h3>Tap Share Button</h3>
+            <p>Tap the share icon (square with arrow) at the bottom of Safari</p>
+          </div>
+        </div>
+        <div class="step">
+          <div class="step-number">3</div>
+          <div class="step-content">
+            <h3>Add to Home Screen</h3>
+            <p>Scroll down and tap "Add to Home Screen", then tap "Add"</p>
+          </div>
+        </div>
+      </div>
+      
+      <div id="android-instructions" class="instructions hidden">
+        <div class="step">
+          <div class="step-number">1</div>
+          <div class="step-content">
+            <h3>Open in Chrome</h3>
+            <p>Scan the QR code or tap "Open App" above using Chrome browser</p>
+          </div>
+        </div>
+        <div class="step">
+          <div class="step-number">2</div>
+          <div class="step-content">
+            <h3>Tap Menu</h3>
+            <p>Tap the three dots (⋮) in the top-right corner of Chrome</p>
+          </div>
+        </div>
+        <div class="step">
+          <div class="step-number">3</div>
+          <div class="step-content">
+            <h3>Install App</h3>
+            <p>Tap "Install app" or "Add to Home screen" and confirm</p>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="features">
+      <div class="feature">
+        <div class="feature-icon">
+          <svg width="20" height="20" fill="white" viewBox="0 0 24 24"><path d="M9 16.17L4.83 12l-1.42 1.41L9 19 21 7l-1.41-1.41L9 16.17z"/></svg>
+        </div>
+        <h3>Daily Tracking</h3>
+        <p>Check off routines morning, noon, and evening</p>
+      </div>
+      <div class="feature">
+        <div class="feature-icon">
+          <svg width="20" height="20" fill="white" viewBox="0 0 24 24"><path d="M13.5.67s.74 2.65.74 4.8c0 2.06-1.35 3.73-3.41 3.73-2.07 0-3.63-1.67-3.63-3.73l.03-.36C5.21 7.51 4 10.62 4 14c0 4.42 3.58 8 8 8s8-3.58 8-8C20 8.61 17.41 3.8 13.5.67zM11.71 19c-1.78 0-3.22-1.4-3.22-3.14 0-1.62 1.05-2.76 2.81-3.12 1.77-.36 3.6-1.21 4.62-2.58.39 1.29.59 2.65.59 4.04 0 2.65-2.15 4.8-4.8 4.8z"/></svg>
+        </div>
+        <h3>Streak Tracking</h3>
+        <p>Build momentum with daily streaks</p>
+      </div>
+      <div class="feature">
+        <div class="feature-icon">
+          <svg width="20" height="20" fill="white" viewBox="0 0 24 24"><path d="M19 3H5c-1.1 0-2 .9-2 2v14c0 1.1.9 2 2 2h14c1.1 0 2-.9 2-2V5c0-1.1-.9-2-2-2zm0 16H5V5h14v14z"/><path d="M7 12h2v5H7zm4-3h2v8h-2zm4-3h2v11h-2z"/></svg>
+        </div>
+        <h3>Dashboard</h3>
+        <p>View progress and completion rates</p>
+      </div>
+      <div class="feature">
+        <div class="feature-icon">
+          <svg width="20" height="20" fill="white" viewBox="0 0 24 24"><path d="M12 1L3 5v6c0 5.55 3.84 10.74 9 12 5.16-1.26 9-6.45 9-12V5l-9-4zm0 10.99h7c-.53 4.12-3.28 7.79-7 8.94V12H5V6.3l7-3.11v8.8z"/></svg>
+        </div>
+        <h3>Your Data</h3>
+        <p>Stored in your own Google Sheet</p>
+      </div>
+    </div>
+
+    <footer>
+      <p>Open source on <a href="https://github.com/your-repo/routine-minder">GitHub</a></p>
+      <p style="margin-top: 0.5rem;">Made with ❤️ for better habits</p>
+    </footer>
+  </div>
+
+  <script>
+    // Generate QR Code
+    const appUrl = 'https://routine-minder.pages.dev';
+    document.getElementById('appUrl').textContent = appUrl;
+    document.getElementById('openApp').href = appUrl;
+    
+    QRCode.toCanvas(document.createElement('canvas'), appUrl, {
+      width: 200,
+      margin: 0,
+      color: {
+        dark: '#1e293b',
+        light: '#ffffff'
+      }
+    }, function(error, canvas) {
+      if (error) console.error(error);
+      canvas.style.borderRadius = '8px';
+      document.getElementById('qrcode').appendChild(canvas);
+    });
+    
+    // Platform switching
+    function showPlatform(platform) {
+      document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
+      document.querySelectorAll('.instructions').forEach(i => i.classList.add('hidden'));
+      
+      event.target.classList.add('active');
+      document.getElementById(platform + '-instructions').classList.remove('hidden');
+    }
+  </script>
+</body>
+</html>

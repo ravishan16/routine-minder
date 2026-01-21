@@ -15,9 +15,9 @@ import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "
 import { TimeCategoryBadge } from "@/components/time-category-badge";
 import { useTheme } from "@/components/theme-provider";
 import { useToast } from "@/hooks/use-toast";
-import { apiRequest, queryClient } from "@/lib/queryClient";
-import type { Routine, InsertRoutine } from "@shared/schema";
-import { insertRoutineSchema } from "@shared/schema";
+import { queryClient } from "@/lib/queryClient";
+import { routinesApi } from "@/lib/api";
+import { CreateRoutineSchema, type Routine, type CreateRoutineInput } from "@/lib/schema";
 
 const timeCategories = [
   { id: "AM", label: "AM" },
@@ -26,7 +26,7 @@ const timeCategories = [
   { id: "ALL", label: "All Day" },
 ] as const;
 
-const formSchema = insertRoutineSchema.extend({
+const formSchema = CreateRoutineSchema.extend({
   name: z.string().min(1, "Routine name is required").max(100, "Name too long"),
 });
 
@@ -34,7 +34,7 @@ type FormData = z.infer<typeof formSchema>;
 
 type RoutineFormProps = {
   routine?: Routine;
-  onSubmit: (data: InsertRoutine) => void;
+  onSubmit: (data: CreateRoutineInput) => void;
   onClose: () => void;
   isSubmitting?: boolean;
 };
@@ -45,8 +45,6 @@ function RoutineForm({ routine, onSubmit, onClose, isSubmitting }: RoutineFormPr
     defaultValues: {
       name: routine?.name || "",
       timeCategories: routine?.timeCategories || ["ALL"],
-      isActive: routine?.isActive ?? true,
-      sortOrder: routine?.sortOrder ?? 0,
       notificationEnabled: routine?.notificationEnabled ?? false,
       notificationTime: routine?.notificationTime || "09:00",
     },
@@ -182,32 +180,33 @@ export default function RoutinesPage() {
   const { toast } = useToast();
 
   const { data: routines, isLoading } = useQuery<Routine[]>({
-    queryKey: ["/api/routines"],
+    queryKey: ["routines"],
+    queryFn: () => routinesApi.getAll(),
   });
 
   const createMutation = useMutation({
-    mutationFn: (data: InsertRoutine) => apiRequest("POST", "/api/routines", data),
+    mutationFn: (data: CreateRoutineInput) => routinesApi.create(data),
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["/api/routines"] });
+      queryClient.invalidateQueries({ queryKey: ["routines"] });
       setIsAddOpen(false);
       toast({ title: "Routine created", description: "Your new routine has been added." });
     },
   });
 
   const updateMutation = useMutation({
-    mutationFn: ({ id, data }: { id: string; data: InsertRoutine }) =>
-      apiRequest("PUT", `/api/routines/${id}`, data),
+    mutationFn: ({ id, data }: { id: string; data: CreateRoutineInput }) =>
+      routinesApi.update(id, data),
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["/api/routines"] });
+      queryClient.invalidateQueries({ queryKey: ["routines"] });
       setEditingRoutine(null);
       toast({ title: "Routine updated", description: "Your routine has been updated." });
     },
   });
 
   const deleteMutation = useMutation({
-    mutationFn: (id: string) => apiRequest("DELETE", `/api/routines/${id}`),
+    mutationFn: (id: string) => routinesApi.delete(id),
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["/api/routines"] });
+      queryClient.invalidateQueries({ queryKey: ["routines"] });
       toast({ title: "Routine deleted", description: "The routine has been removed." });
     },
   });

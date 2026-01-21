@@ -1,7 +1,7 @@
 import { Trophy, Flame, Star, Award, Crown, Sparkles } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import { cn } from "@/lib/utils";
-import type { Milestone } from "@shared/schema";
+import type { Milestone } from "@/lib/schema";
 
 type MilestoneBadgeProps = {
   milestone: Milestone;

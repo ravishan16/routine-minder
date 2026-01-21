@@ -9,19 +9,26 @@ import TodayPage from "@/pages/today";
 import RoutinesPage from "@/pages/routines";
 import DashboardPage from "@/pages/dashboard";
 import SettingsPage from "@/pages/settings";
-import PrivacyPage from "@/pages/privacy";
-import TermsPage from "@/pages/terms";
+import SetupPage from "@/pages/setup";
 import NotFound from "@/pages/not-found";
+import { isApiConfigured } from "@/lib/api";
 
 function Router() {
+  const isConfigured = isApiConfigured();
+  const hasUser = !!localStorage.getItem("routineMinder_user");
+  
+  // Show setup page if not configured or no user
+  if (!isConfigured || !hasUser) {
+    return <SetupPage />;
+  }
+
   return (
     <Switch>
       <Route path="/" component={TodayPage} />
       <Route path="/routines" component={RoutinesPage} />
       <Route path="/dashboard" component={DashboardPage} />
       <Route path="/settings" component={SettingsPage} />
-      <Route path="/privacy" component={PrivacyPage} />
-      <Route path="/terms" component={TermsPage} />
+      <Route path="/setup" component={SetupPage} />
       <Route component={NotFound} />
     </Switch>
   );
@@ -34,7 +41,7 @@ function App() {
         <TooltipProvider>
           <div className="min-h-screen bg-background max-w-lg mx-auto relative">
             <Router />
-            <BottomNav />
+            {isApiConfigured() && localStorage.getItem("routineMinder_user") && <BottomNav />}
           </div>
           <Toaster />
         </TooltipProvider>

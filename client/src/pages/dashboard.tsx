@@ -1,35 +1,75 @@
 import { useState } from "react";
 import { useQuery } from "@tanstack/react-query";
-import { Flame, Trophy, CheckCircle2, Target, TrendingUp, Calendar, Sun, Moon, Share2 } from "lucide-react";
+import { Flame, Trophy, CheckCircle2, Target, Sun, Moon, TrendingUp, Calendar } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { Skeleton } from "@/components/ui/skeleton";
 import { StatCard } from "@/components/stat-card";
-import { ShareDashboardButton, ShareRoutineButton } from "@/components/share-card";
-import { MilestoneBadge, getAchievedMilestones, getNextMilestone } from "@/components/milestone-badge";
 import { ProgressBar } from "@/components/progress-bar";
+import { MilestoneBadge } from "@/components/milestone-badge";
+import { ShareDashboardButton, ShareRoutineButton } from "@/components/share-card";
 import { useTheme } from "@/components/theme-provider";
-import { cn } from "@/lib/utils";
-import type { DashboardStats, RoutineStats } from "@shared/schema";
+import { dashboardApi, routinesApi, completionsApi } from "@/lib/api";
+import type { Dashboard, RoutineStats, Milestone, Completion } from "@/lib/schema";
+import { getNextMilestone, getAchievedMilestones } from "@/lib/schema";
 
 const timeRanges = [
-  { id: "7d", label: "Last 7 Days" },
-  { id: "30d", label: "Last 30 Days" },
-  { id: "1y", label: "1 Year" },
-  { id: "ytd", label: "Year to Date" },
-  { id: "all", label: "All Time" },
-];
+  { id: "week", label: "Last 7 Days" },
+  { id: "month", label: "Last 30 Days" },
+  { id: "year", label: "1 Year" },
+] as const;
+
+type TimeRange = (typeof timeRanges)[number]["id"];
 
 export default function DashboardPage() {
-  const [selectedRange, setSelectedRange] = useState("7d");
+  const [selectedRange, setSelectedRange] = useState<TimeRange>("week");
   const { theme, toggleTheme } = useTheme();
 
-  const { data: stats, isLoading: statsLoading } = useQuery<DashboardStats>({
-    queryKey: ["/api/dashboard", selectedRange],
+  const { data: stats, isLoading: statsLoading } = useQuery<Dashboard>({
+    queryKey: ["dashboard", selectedRange],
+    queryFn: () => dashboardApi.getStats(selectedRange),
   });
 
-  const { data: routineStats, isLoading: routineStatsLoading } = useQuery<RoutineStats[]>({
-    queryKey: ["/api/dashboard/routines", selectedRange],
+  // Fetch routines and compute stats for each
+  const { data: routines } = useQuery({
+    queryKey: ["routines"],
+    queryFn: routinesApi.getAll,
+  });
+
+  const { data: completions } = useQuery<Completion[]>({
+    queryKey: ["completions", selectedRange],
+    queryFn: () => completionsApi.getRange(
+      selectedRange === "week" ? 7 : selectedRange === "month" ? 30 : 365
+    ),
+  });
+
+  // Compute routine stats from completions
+  const routineStats: RoutineStats[] = (routines || []).map((routine) => {
+    const routineCompletions = (completions || []).filter((c: Completion) => c.routineId === routine.id && c.completed);
+    
+    // Calculate streak (simplified - count consecutive days from today backwards)
+    const today = new Date();
+    let currentStreak = 0;
+    for (let i = 0; i < 365; i++) {
+      const date = new Date(today);
+      date.setDate(date.getDate() - i);
+      const dateStr = date.toISOString().split("T")[0];
+      const hasCompletion = routineCompletions.some((c: Completion) => c.date === dateStr);
+      if (hasCompletion) {
+        currentStreak++;
+      } else if (i > 0) {
+        break;
+      }
+    }
+
+    return {
+      routineId: routine.id,
+      routineName: routine.name,
+      currentStreak,
+      longestStreak: currentStreak, // Simplified
+      completionRate: routineCompletions.length > 0 ? Math.round((routineCompletions.length / 30) * 100) : 0,
+      achievedMilestones: getAchievedMilestones(currentStreak),
+    };
   });
 
   const getMotivationalMessage = (rate: number) => {
@@ -38,6 +78,12 @@ export default function DashboardPage() {
     if (rate >= 50) return "You're building momentum!";
     if (rate >= 25) return "Every day is a fresh start!";
     return "Start small, dream big!";
+  };
+
+  const getPeriodLabel = () => {
+    if (selectedRange === "week") return "This week";
+    if (selectedRange === "month") return "This month";
+    return "This year";
   };
 
   return (
@@ -104,14 +150,14 @@ export default function DashboardPage() {
                 icon={CheckCircle2}
                 iconColor="text-accent"
                 iconBgColor="bg-accent/10"
-                value={stats.completedCount}
+                value={stats.totalCompleted}
                 label="Completed"
               />
               <StatCard
                 icon={Target}
                 iconColor="text-primary"
                 iconBgColor="bg-primary/10"
-                value={stats.totalTasks}
+                value={stats.totalExpected}
                 label="Total Tasks"
               />
             </div>
@@ -124,12 +170,12 @@ export default function DashboardPage() {
               <div className="flex items-end justify-between mb-3">
                 <span className="text-4xl font-bold">{stats.completionRate}%</span>
                 <span className="text-sm text-muted-foreground">
-                  {stats.completedCount} of {stats.totalTasks} tasks
+                  {stats.totalCompleted} of {stats.totalExpected} tasks
                 </span>
               </div>
               <ProgressBar
-                value={stats.completedCount}
-                max={stats.totalTasks}
+                value={stats.totalCompleted}
+                max={stats.totalExpected || 1}
                 showLabel={false}
                 size="lg"
               />
@@ -144,27 +190,19 @@ export default function DashboardPage() {
                 <span className="font-semibold">Period Summary</span>
               </div>
               <p className="text-sm text-muted-foreground">
-                {stats.periodLabel}: You've completed <strong>{stats.completedCount}</strong> out of{" "}
-                <strong>{stats.totalTasks}</strong> routine tasks.
+                {getPeriodLabel()}: You've completed <strong>{stats.totalCompleted}</strong> out of{" "}
+                <strong>{stats.totalExpected}</strong> routine tasks.
               </p>
             </Card>
           </>
         ) : null}
 
-        {routineStatsLoading ? (
-          <div className="space-y-3">
-            <Skeleton className="h-6 w-32" />
-            {[1, 2, 3].map((i) => (
-              <Skeleton key={i} className="h-24 rounded-xl" />
-            ))}
-          </div>
-        ) : routineStats && routineStats.length > 0 ? (
+        {routineStats.length > 0 ? (
           <section>
             <h2 className="text-lg font-semibold mb-3">Routine Streaks</h2>
             <div className="space-y-3">
               {routineStats.map((rs) => {
                 const nextMilestone = getNextMilestone(rs.currentStreak);
-                const achievedMilestones = getAchievedMilestones(rs.currentStreak);
 
                 return (
                   <Card key={rs.routineId} className="p-4">
@@ -182,10 +220,10 @@ export default function DashboardPage() {
                       <ShareRoutineButton routineStats={rs} />
                     </div>
                     
-                    {achievedMilestones.length > 0 && (
+                    {rs.achievedMilestones.length > 0 && (
                       <div className="flex flex-wrap gap-1.5 mt-2">
-                        {achievedMilestones.map((m) => (
-                          <MilestoneBadge key={m} milestone={m} size="sm" />
+                        {rs.achievedMilestones.map((m) => (
+                          <MilestoneBadge key={m} milestone={m as Milestone} size="sm" />
                         ))}
                       </div>
                     )}

@@ -1,11 +1,10 @@
-import { Share2, X } from "lucide-react";
+import { Share2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger, DialogClose } from "@/components/ui/dialog";
 import { useToast } from "@/hooks/use-toast";
-import type { DashboardStats, RoutineStats } from "@shared/schema";
+import type { Dashboard, RoutineStats } from "@/lib/schema";
 
 type ShareDashboardProps = {
-  stats: DashboardStats;
+  stats: Dashboard;
 };
 
 type ShareRoutineProps = {
@@ -19,7 +18,7 @@ export function ShareDashboardButton({ stats }: ShareDashboardProps) {
 Current Streak: ${stats.currentStreak} days
 Longest Streak: ${stats.longestStreak} days
 Completion Rate: ${stats.completionRate}%
-${stats.completedCount} of ${stats.totalTasks} tasks completed
+${stats.totalCompleted} of ${stats.totalExpected} tasks completed
 
 Keep building those habits!`;
 
@@ -59,11 +58,18 @@ Keep building those habits!`;
 export function ShareRoutineButton({ routineStats }: ShareRoutineProps) {
   const { toast } = useToast();
 
+  const formatMilestone = (m: number): string => {
+    if (m === 365) return "1 Year";
+    if (m === 30) return "1 Month";
+    if (m === 7) return "1 Week";
+    return `${m} Days`;
+  };
+
   const shareText = `${routineStats.routineName} Streak:
 Current: ${routineStats.currentStreak} days
 Best: ${routineStats.longestStreak} days
 Completion Rate: ${routineStats.completionRate}%
-${routineStats.achievedMilestones.length > 0 ? `Milestones: ${routineStats.achievedMilestones.map(m => m === 365 ? "1 Year" : m === 30 ? "1 Month" : m === 7 ? "1 Week" : `${m} Days`).join(", ")}` : ""}
+${routineStats.achievedMilestones.length > 0 ? `Milestones: ${routineStats.achievedMilestones.map(formatMilestone).join(", ")}` : ""}
 
 Building habits with Routine Minder!`;
 

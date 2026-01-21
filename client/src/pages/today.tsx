@@ -8,8 +8,9 @@ import { useTheme } from "@/components/theme-provider";
 import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
 import { formatDate } from "@/lib/utils";
-import { apiRequest, queryClient } from "@/lib/queryClient";
-import type { RoutineWithStatus } from "@shared/schema";
+import { queryClient } from "@/lib/queryClient";
+import { routinesApi, completionsApi } from "@/lib/api";
+import type { DailyRoutine } from "@/lib/schema";
 
 const categoryOrder = ["AM", "NOON", "PM", "ALL"];
 const categoryConfig = {
@@ -24,23 +25,29 @@ export default function TodayPage() {
   const { theme, toggleTheme } = useTheme();
   const dateStr = formatDate(selectedDate);
 
-  const { data: routines, isLoading } = useQuery<RoutineWithStatus[]>({
-    queryKey: ["/api/routines/daily", dateStr],
+  const { data: routines, isLoading } = useQuery<DailyRoutine[]>({
+    queryKey: ["routines", "daily", dateStr],
+    queryFn: () => routinesApi.getDaily(dateStr),
   });
 
   const toggleMutation = useMutation({
-    mutationFn: async ({ routineId, timeCategory, completed }: { routineId: string; timeCategory: string; completed: boolean }) => {
-      return apiRequest("POST", "/api/completions", {
+    mutationFn: async ({ routineId, timeCategory }: { routineId: string; timeCategory: string }) => {
+      return completionsApi.toggle({
         routineId,
         date: dateStr,
-        timeCategory,
-        completed,
+        timeCategory: timeCategory as "AM" | "NOON" | "PM" | "ALL",
       });
     },
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["/api/routines/daily", dateStr] });
+      queryClient.invalidateQueries({ queryKey: ["routines", "daily", dateStr] });
     },
   });
+
+  // Transform routines data for display
+  const getCompletionStatus = (routine: DailyRoutine, category: string) => {
+    const completion = routine.completions?.find(c => c.timeCategory === category);
+    return completion?.completed || false;
+  };
 
   const groupedRoutines = routines?.reduce((acc, routine) => {
     routine.timeCategories.forEach((category) => {
@@ -48,11 +55,11 @@ export default function TodayPage() {
       acc[category].push({ routine, category });
     });
     return acc;
-  }, {} as Record<string, { routine: RoutineWithStatus; category: string }[]>) || {};
+  }, {} as Record<string, { routine: DailyRoutine; category: string }[]>) || {};
 
   const totalTasks = routines?.reduce((sum, r) => sum + r.timeCategories.length, 0) || 0;
   const completedTasks = routines?.reduce((sum, r) => {
-    return sum + r.timeCategories.filter(cat => r.completions[cat]).length;
+    return sum + r.timeCategories.filter(cat => getCompletionStatus(r, cat)).length;
   }, 0) || 0;
 
   return (
@@ -122,12 +129,11 @@ export default function TodayPage() {
                     <RoutineCheckbox
                       key={`${routine.id}-${cat}`}
                       testId={`checkbox-routine-${routine.id}-${cat}`}
-                      checked={routine.completions[cat] || false}
-                      onChange={(checked) => {
+                      checked={getCompletionStatus(routine, cat)}
+                      onChange={() => {
                         toggleMutation.mutate({
                           routineId: routine.id,
                           timeCategory: cat,
-                          completed: checked,
                         });
                       }}
                       label={routine.name}
