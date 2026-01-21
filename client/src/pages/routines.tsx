@@ -249,6 +249,9 @@ export default function RoutinesPage() {
     mutationFn: (id: string) => routinesApi.delete(id),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["routines"] });
+      queryClient.invalidateQueries({ queryKey: ["dailyRoutines"] });
+      queryClient.invalidateQueries({ queryKey: ["completions-all"] });
+      queryClient.invalidateQueries({ queryKey: ["dashboard"] });
       toast({ title: "Routine deleted", description: "The routine has been removed." });
     },
   });

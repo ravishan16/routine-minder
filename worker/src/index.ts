@@ -188,13 +188,15 @@ app.post('/api/routines', async (c) => {
   const userId = c.req.header('X-User-Id');
   if (!userId) return c.json({ error: 'Unauthorized' }, 401);
 
-  const { name, icon, timeCategories } = await c.req.json();
-  const id = crypto.randomUUID();
+  const body = await c.req.json();
+  const { name, icon, timeCategories, sortOrder, createdAt } = body;
+  // Use client-provided ID to prevent duplicates, or generate new one
+  const id = body.id || crypto.randomUUID();
 
-  // Get max sort order
-  const maxOrder = await c.env.DB.prepare(
+  // Get max sort order (only if not provided by client)
+  const maxOrder = sortOrder === undefined ? await c.env.DB.prepare(
     'SELECT MAX(sort_order) as max FROM routines WHERE user_id = ?'
-  ).bind(userId).first();
+  ).bind(userId).first() : null;
 
   await c.env.DB.prepare(
     'INSERT INTO routines (id, user_id, name, icon, time_categories, is_active, sort_order, created_at) VALUES (?, ?, ?, ?, ?, ?, ?, ?)'
@@ -205,11 +207,11 @@ app.post('/api/routines', async (c) => {
     icon || '✅',
     JSON.stringify(timeCategories),
     1,
-    ((maxOrder?.max as number) || 0) + 1,
-    new Date().toISOString()
+    sortOrder ?? ((maxOrder?.max as number) || 0) + 1,
+    createdAt || new Date().toISOString()
   ).run();
 
-  return c.json({ id, name, icon: icon || '✅', timeCategories, isActive: true });
+  return c.json({ id, name, icon: icon || '✅', timeCategories, isActive: true, sortOrder, createdAt });
 });
 
 // Update routine
@@ -444,10 +446,11 @@ app.post('/api/sync', async (c) => {
   if (routines && Array.isArray(routines)) {
     for (const r of routines) {
       await c.env.DB.prepare(`
-        INSERT INTO routines (id, user_id, name, time_categories, is_active, sort_order, created_at)
-        VALUES (?, ?, ?, ?, ?, ?, ?)
+        INSERT INTO routines (id, user_id, name, icon, time_categories, is_active, sort_order, created_at)
+        VALUES (?, ?, ?, ?, ?, ?, ?, ?)
         ON CONFLICT(id) DO UPDATE SET
           name = excluded.name,
+          icon = excluded.icon,
           time_categories = excluded.time_categories,
           is_active = excluded.is_active,
           sort_order = excluded.sort_order
@@ -455,6 +458,7 @@ app.post('/api/sync', async (c) => {
         r.id,
         userId,
         r.name,
+        r.icon || '✅',
         JSON.stringify(r.timeCategories),
         r.isActive ? 1 : 0,
         r.sortOrder || 0,

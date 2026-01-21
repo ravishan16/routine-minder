@@ -219,55 +219,89 @@ export const routinesApi = {
   },
 
   create: async (data: { name: string; icon?: string; timeCategories: TimeCategory[] }): Promise<Routine> => {
+    // Require online for routine creation to prevent duplicate ID issues
+    if (!navigator.onLine) {
+      throw new Error("You need to be online to create a routine. Please check your connection.");
+    }
+
     const routines = getFromStorage<Routine[]>(KEYS.routines, []);
+    
+    // Create routine on server FIRST to get the canonical ID
+    const serverRoutine = await api<Routine>("/api/routines", {
+      method: "POST",
+      body: JSON.stringify({
+        name: data.name,
+        icon: data.icon || "✅",
+        timeCategories: data.timeCategories,
+      }),
+    });
+
+    if (!serverRoutine) {
+      throw new Error("Failed to create routine. Please try again.");
+    }
+
+    // Now save to localStorage with server's ID
     const newRoutine: Routine = {
-      id: crypto.randomUUID(),
-      name: data.name,
-      icon: data.icon || "✅",
-      timeCategories: data.timeCategories,
-      isActive: true,
+      id: serverRoutine.id,
+      name: serverRoutine.name,
+      icon: serverRoutine.icon || "✅",
+      timeCategories: serverRoutine.timeCategories,
+      isActive: serverRoutine.isActive ?? true,
       sortOrder: routines.length,
       createdAt: new Date().toISOString(),
     };
     routines.push(newRoutine);
     saveToStorage(KEYS.routines, routines);
 
-    // Sync to server
-    api("/api/routines", {
-      method: "POST",
-      body: JSON.stringify(data),
-    });
-
     return newRoutine;
   },
 
   update: async (id: string, data: Partial<Routine>): Promise<Routine> => {
+    // Require online for updates
+    if (!navigator.onLine) {
+      throw new Error("You need to be online to update a routine. Please check your connection.");
+    }
+
     const routines = getFromStorage<Routine[]>(KEYS.routines, []);
     const index = routines.findIndex((r) => r.id === id);
     if (index === -1) throw new Error("Routine not found");
-    
-    routines[index] = { ...routines[index], ...data };
-    saveToStorage(KEYS.routines, routines);
 
-    // Sync to server
-    api(`/api/routines/${id}`, {
+    // Update server first
+    const result = await api(`/api/routines/${id}`, {
       method: "PUT",
       body: JSON.stringify(data),
     });
+
+    if (!result) {
+      throw new Error("Failed to update routine. Please try again.");
+    }
+    
+    // Then update localStorage
+    routines[index] = { ...routines[index], ...data };
+    saveToStorage(KEYS.routines, routines);
 
     return routines[index];
   },
 
   delete: async (id: string): Promise<void> => {
+    // Require online for deletion
+    if (!navigator.onLine) {
+      throw new Error("You need to be online to delete a routine. Please check your connection.");
+    }
+
+    // Delete from server FIRST (soft-delete)
+    const result = await api<{ success: boolean }>(`/api/routines/${id}`, { method: "DELETE" });
+
+    if (!result) {
+      throw new Error("Failed to delete routine. Please try again.");
+    }
+
+    // Then remove from localStorage
     const routines = getFromStorage<Routine[]>(KEYS.routines, []);
     const filtered = routines.filter((r) => r.id !== id);
     saveToStorage(KEYS.routines, filtered);
 
     // KEEP completions for historical stats! Don't delete them.
-    // The server soft-deletes, so history is preserved.
-
-    // Sync to server (server will soft-delete)
-    api(`/api/routines/${id}`, { method: "DELETE" });
   },
 };
 
