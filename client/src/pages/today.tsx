@@ -129,6 +129,7 @@ export default function TodayPage() {
                   key={`${routine.id}-${category}`}
                   label={routine.name}
                   icon={routine.icon}
+                  notificationTime={routine.notificationEnabled && routine.notificationTime ? routine.notificationTime : undefined}
                   checked={isCompleted}
                   onChange={() =>
                     toggleMutation.mutate({

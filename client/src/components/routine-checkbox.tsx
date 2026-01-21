@@ -1,4 +1,4 @@
-import { Check } from "lucide-react";
+import { Check, Bell } from "lucide-react";
 import { cn } from "@/lib/utils";
 
 type RoutineCheckboxProps = {
@@ -6,11 +6,20 @@ type RoutineCheckboxProps = {
   onChange: (checked: boolean) => void;
   label: string;
   icon?: string;
+  notificationTime?: string;
   disabled?: boolean;
   testId?: string;
 };
 
-export function RoutineCheckbox({ checked, onChange, label, icon, disabled, testId }: RoutineCheckboxProps) {
+// Format 24h time to 12h format
+function formatTime12Hour(time: string): string {
+  const [hours, minutes] = time.split(':').map(Number);
+  const period = hours >= 12 ? 'PM' : 'AM';
+  const hour12 = hours % 12 || 12;
+  return `${hour12}:${minutes.toString().padStart(2, '0')} ${period}`;
+}
+
+export function RoutineCheckbox({ checked, onChange, label, icon, notificationTime, disabled, testId }: RoutineCheckboxProps) {
   return (
     <button
       data-testid={testId}
@@ -38,14 +47,22 @@ export function RoutineCheckbox({ checked, onChange, label, icon, disabled, test
         )} />
       </div>
       {icon && <span className="text-xl flex-shrink-0">{icon}</span>}
-      <span
-        className={cn(
-          "text-base font-medium transition-all duration-200 text-left",
-          checked && "text-muted-foreground"
+      <div className="flex-1 text-left min-w-0">
+        <span
+          className={cn(
+            "text-base font-medium transition-all duration-200 block truncate",
+            checked && "text-muted-foreground"
+          )}
+        >
+          {label}
+        </span>
+        {notificationTime && !checked && (
+          <div className="flex items-center gap-1 text-xs text-muted-foreground mt-0.5">
+            <Bell className="w-3 h-3" />
+            <span>Reminder at {formatTime12Hour(notificationTime)}</span>
+          </div>
         )}
-      >
-        {label}
-      </span>
+      </div>
     </button>
   );
 }

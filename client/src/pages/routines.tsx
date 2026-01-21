@@ -20,6 +20,14 @@ import { queryClient } from "@/lib/queryClient";
 import { routinesApi } from "@/lib/storage";
 import { CreateRoutineSchema, type Routine, type CreateRoutineInput } from "@/lib/schema";
 
+// Format 24h time to 12h format
+function formatTime12Hour(time: string): string {
+  const [hours, minutes] = time.split(':').map(Number);
+  const period = hours >= 12 ? 'PM' : 'AM';
+  const hour12 = hours % 12 || 12;
+  return `${hour12}:${minutes.toString().padStart(2, '0')} ${period}`;
+}
+
 const timeCategories = [
   { id: "AM", label: "AM" },
   { id: "NOON", label: "Noon" },
@@ -318,8 +326,11 @@ export default function RoutinesPage() {
                     <h3 className="font-semibold truncate" data-testid={`text-routine-name-${routine.id}`}>
                       {routine.name}
                     </h3>
-                    {routine.notificationEnabled && (
-                      <Bell className="w-3.5 h-3.5 text-primary flex-shrink-0" />
+                    {routine.notificationEnabled && routine.notificationTime && (
+                      <div className="flex items-center gap-1 text-xs bg-primary/10 text-primary px-2 py-0.5 rounded-full flex-shrink-0">
+                        <Bell className="w-3 h-3" />
+                        <span>{formatTime12Hour(routine.notificationTime)}</span>
+                      </div>
                     )}
                   </div>
                   <div className="flex flex-wrap gap-1.5">
