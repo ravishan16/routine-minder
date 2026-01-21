@@ -10,8 +10,8 @@ on:
   workflow_dispatch:
 
 jobs:
-  deploy-pwa:
-    name: Deploy PWA
+  deploy:
+    name: Deploy to Cloudflare Pages
     runs-on: ubuntu-latest
     permissions:
       contents: read
@@ -33,25 +33,10 @@ jobs:
         run: npm run build
 
       - name: Deploy to Cloudflare Pages
-        uses: cloudflare/wrangler-action@v3
+        uses: cloudflare/pages-action@v1
         with:
           apiToken: ${{ secrets.CLOUDFLARE_API_TOKEN }}
           accountId: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
-          command: pages deploy dist --project-name=routine-minder
-
-  deploy-landing:
-    name: Deploy Landing Page
-    runs-on: ubuntu-latest
-    permissions:
-      contents: read
-      deployments: write
-    steps:
-      - name: Checkout
-        uses: actions/checkout@v4
-
-      - name: Deploy to Cloudflare Pages
-        uses: cloudflare/wrangler-action@v3
-        with:
-          apiToken: ${{ secrets.CLOUDFLARE_API_TOKEN }}
-          accountId: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
-          command: pages deploy landing --project-name=routine-minder-landing
+          projectName: routine-minder
+          directory: dist
+          gitHubToken: ${{ secrets.GITHUB_TOKEN }}
