@@ -140,19 +140,26 @@ async function syncFromServer(): Promise<void> {
 }
 
 // Public sync function for after Google Sign-In on new device
-export async function syncFromServerAfterGoogleSignIn(): Promise<void> {
+// Returns true if routines were restored from server
+export async function syncFromServerAfterGoogleSignIn(): Promise<boolean> {
   const [routines, completions] = await Promise.all([
     api<Routine[]>("/api/routines"),
     api<Completion[]>("/api/completions?days=30"),
   ]);
 
-  if (routines && routines.length > 0) {
+  const hasRoutines = routines && routines.length > 0;
+  
+  if (hasRoutines) {
     saveToStorage(KEYS.routines, routines);
     // Mark as onboarded if we have routines from server
     localStorage.setItem(KEYS.onboarded, "true");
+    // Also mark as visited
+    localStorage.setItem(KEYS.visited, "true");
   }
   if (completions) saveToStorage(KEYS.completions, completions);
   localStorage.setItem(KEYS.lastSync, new Date().toISOString());
+  
+  return hasRoutines ?? false;
 }
 
 async function syncToServer(): Promise<void> {

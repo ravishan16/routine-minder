@@ -54,6 +54,12 @@ function AppContent() {
     setShowLanding(false);
   };
 
+  // Handle successful Google restore from onboarding
+  const handleGoogleSignIn = () => {
+    queryClient.invalidateQueries({ queryKey: ["routines"] });
+    setOnboarded();
+  };
+
   // Show landing page for first-time visitors
   if (showLanding) {
     return <LandingPage onGetStarted={handleGetStarted} />;
@@ -74,6 +80,7 @@ function AppContent() {
     return (
       <Onboarding
         onComplete={createRoutinesMutation.mutate}
+        onGoogleSignIn={handleGoogleSignIn}
         isLoading={createRoutinesMutation.isPending}
       />
     );
