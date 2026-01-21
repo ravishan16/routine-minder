@@ -1,9 +1,9 @@
 # Cloudflare Pages Configuration
-# This file tells Cloudflare Pages how to build the project
+name = "routine-minder"
+pages_build_output_dir = "dist"
 
 [build]
 command = "npm run build"
-publish = "dist"
 
 [build.environment]
 NODE_VERSION = "20"
