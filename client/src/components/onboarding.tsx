@@ -1,8 +1,10 @@
 import { useState } from "react";
-import { Droplets, Pill, BookOpen, Music, Check, Sparkles, Dumbbell, Brain } from "lucide-react";
+import { Droplets, Pill, BookOpen, Music, Check, Sparkles, Dumbbell, Brain, Cloud } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { cn } from "@/lib/utils";
+import { signInWithGoogle, getGoogleUser } from "@/lib/storage";
+import { useToast } from "@/hooks/use-toast";
 import type { TimeCategory } from "@/lib/schema";
 
 type PresetRoutine = {
@@ -78,7 +80,9 @@ type OnboardingProps = {
 };
 
 export function Onboarding({ onComplete, isLoading }: OnboardingProps) {
+  const { toast } = useToast();
   const [selected, setSelected] = useState<Set<string>>(new Set(["hydration", "vitamins", "journaling"]));
+  const [showSyncOption, setShowSyncOption] = useState(false);
 
   const toggleRoutine = (id: string) => {
     const newSelected = new Set(selected);
@@ -99,6 +103,22 @@ export function Onboarding({ onComplete, isLoading }: OnboardingProps) {
 
   const handleSkip = () => {
     onComplete([]);
+  };
+
+  const handleGoogleSync = async () => {
+    try {
+      await signInWithGoogle();
+      toast({ 
+        title: "Connected to Google", 
+        description: "Your routines will sync across devices" 
+      });
+    } catch (e) {
+      toast({ 
+        title: "Sign-in failed", 
+        description: "You can set this up later in Settings",
+        variant: "destructive" 
+      });
+    }
   };
 
   return (
@@ -162,12 +182,23 @@ export function Onboarding({ onComplete, isLoading }: OnboardingProps) {
           >
             {isLoading ? "Setting up..." : `Start with ${selected.size} routine${selected.size !== 1 ? "s" : ""}`}
           </Button>
+          
+          {/* Optional Google sync */}
+          <button
+            onClick={handleGoogleSync}
+            disabled={isLoading}
+            className="w-full text-sm text-muted-foreground hover:text-foreground transition-colors py-2 flex items-center justify-center gap-2"
+          >
+            <Cloud className="w-4 h-4" />
+            Enable Google sync for multiple devices
+          </button>
+          
           <button
             onClick={handleSkip}
             disabled={isLoading}
-            className="w-full text-sm text-muted-foreground hover:text-foreground transition-colors py-2"
+            className="w-full text-xs text-muted-foreground/70 hover:text-muted-foreground transition-colors py-1"
           >
-            Skip and add my own
+            Skip for now
           </button>
         </div>
       </div>

@@ -139,6 +139,22 @@ async function syncFromServer(): Promise<void> {
   localStorage.setItem(KEYS.lastSync, new Date().toISOString());
 }
 
+// Public sync function for after Google Sign-In on new device
+export async function syncFromServerAfterGoogleSignIn(): Promise<void> {
+  const [routines, completions] = await Promise.all([
+    api<Routine[]>("/api/routines"),
+    api<Completion[]>("/api/completions?days=30"),
+  ]);
+
+  if (routines && routines.length > 0) {
+    saveToStorage(KEYS.routines, routines);
+    // Mark as onboarded if we have routines from server
+    localStorage.setItem(KEYS.onboarded, "true");
+  }
+  if (completions) saveToStorage(KEYS.completions, completions);
+  localStorage.setItem(KEYS.lastSync, new Date().toISOString());
+}
+
 async function syncToServer(): Promise<void> {
   const routines = getFromStorage<Routine[]>(KEYS.routines, []);
   const completions = getFromStorage<Completion[]>(KEYS.completions, []);
