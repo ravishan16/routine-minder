@@ -18,7 +18,8 @@ const SETTINGS_SHEET = 'Settings';
 const ALLOWED_ORIGINS = [
   'http://localhost:5173',
   'http://localhost:4173',
-  'https://routine-minder.pages.dev'
+  'https://routine-minder.pages.dev',
+  'https://routine-minder.ravishankars.com'
 ];
 
 /**

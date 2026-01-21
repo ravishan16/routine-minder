@@ -59,8 +59,8 @@ git push origin main
 2. You should see the "Deploy to Cloudflare Pages" workflow running
 3. Wait for both jobs to complete (green checkmarks)
 4. Your sites will be available at:
-   - PWA: `https://routine-minder.pages.dev`
-   - Landing: `https://routine-minder-landing.pages.dev`
+   - **Custom Domain**: `https://routine-minder.ravishankars.com`
+   - **Cloudflare URL**: `https://routine-minder.pages.dev`
 
 ## Workflow Details
 
@@ -121,7 +121,7 @@ npm run build
 wrangler pages deploy dist --project-name=routine-minder
 
 # Deploy landing page
-wrangler pages deploy landing --project-name=routine-minder-landing
+wrangler pages deploy dist --project-name=routine-minder
 ```
 
 ## Environment Variables

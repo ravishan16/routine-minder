@@ -81,8 +81,8 @@ git push origin main
 ```
 
 The GitHub Action will automatically:
-- Build the PWA and deploy to `routine-minder.pages.dev`
-- Deploy the landing page to `routine-minder-landing.pages.dev`
+- Build the PWA and deploy to `routine-minder.ravishankars.com`
+
 
 #### Manual Deployment (Alternative)
 
