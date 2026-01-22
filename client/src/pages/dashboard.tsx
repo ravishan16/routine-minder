@@ -423,40 +423,40 @@ export default function DashboardPage() {
           <h3 className="font-semibold text-sm">Routine Performance</h3>
           <ShareButton section="Routines" sectionRef={routinesRef} />
         </div>
-        <div className="space-y-4">
+        <div className="flex flex-col gap-6">
           {routineStats.map((routine) => {
             const milestone = getMilestoneProgress(routine.currentStreak);
             return (
               <div
                 key={routine.routineId}
-                className="p-4 rounded-xl bg-muted/20 hover:bg-muted/30 transition-colors space-y-3"
+                className="rounded-xl bg-muted/20 hover:bg-muted/30 transition-colors px-5 py-6 flex flex-col gap-4 shadow-sm"
               >
                 {/* Header row */}
-                <div className="flex items-center gap-3">
-                  <div className="text-3xl flex-shrink-0">{routine.routineIcon}</div>
+                <div className="flex items-center gap-4">
+                  <div className="text-4xl flex-shrink-0 mr-2">{routine.routineIcon}</div>
                   <div className="flex-1 min-w-0">
                     <div className="flex items-center justify-between gap-2">
-                      <span className="font-semibold text-base truncate">{routine.routineName}</span>
-                      <span className="font-bold text-lg text-primary">{routine.completionRate}%</span>
+                      <span className="font-semibold text-lg truncate" style={{lineHeight:1.2}}>{routine.routineName}</span>
+                      <span className="font-bold text-xl text-primary">{routine.completionRate}%</span>
                     </div>
                     <Progress value={routine.completionRate} className="h-2 mt-2" />
                   </div>
                 </div>
 
                 {/* Streak milestone */}
-                <div className="pt-2 border-t border-border/30">
-                  <div className="flex items-center justify-between mb-1.5">
+                <div className="pt-3 border-t border-border/30">
+                  <div className="flex items-center justify-between mb-2">
                     <div className="flex items-center gap-2">
-                      <Flame className="h-3.5 w-3.5 text-orange-500" />
-                      <span className="text-xs font-medium">{routine.currentStreak} day streak</span>
+                      <Flame className="h-4 w-4 text-orange-500" />
+                      <span className="text-sm font-medium">{routine.currentStreak} day streak</span>
                     </div>
-                    <span className="text-xs text-muted-foreground">
+                    <span className="text-sm text-muted-foreground">
                       {milestone.remaining} to {getMilestoneLabel(milestone.milestone)}
                     </span>
                   </div>
                   <div className="relative">
-                    <Progress value={milestone.progress} className="h-1.5" />
-                    <div className="flex justify-between mt-1 text-[9px] text-muted-foreground">
+                    <Progress value={milestone.progress} className="h-2" />
+                    <div className="flex justify-between mt-1 text-xs text-muted-foreground">
                       <span>0</span>
                       <span>{milestone.milestone} days</span>
                     </div>
@@ -464,10 +464,10 @@ export default function DashboardPage() {
                 </div>
 
                 {/* Footer stats */}
-                <div className="flex items-center justify-between text-xs text-muted-foreground pt-1">
-                  <span>📈 {routine.totalCompletions} completions</span>
+                <div className="flex items-center justify-between text-sm text-muted-foreground pt-2">
+                  <span className="flex items-center gap-1"><span role="img" aria-label="chart">📈</span> {routine.totalCompletions} completions</span>
                   {routine.currentStreak >= 7 && (
-                    <span className="text-emerald-500 font-medium">🏆 Streak active!</span>
+                    <span className="text-emerald-500 font-semibold flex items-center gap-1">🏆 Streak active!</span>
                   )}
                 </div>
               </div>
