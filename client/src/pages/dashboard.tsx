@@ -423,45 +423,46 @@ export default function DashboardPage() {
       </div>
 
       {/* Routine Performance with Milestones */}
-      <div ref={routinesRef} className="glass-card p-5 space-y-4">
+      <div ref={routinesRef} className="glass-card p-5 space-y-4 max-w-2xl mx-auto shareable">
         <div className="flex items-center justify-between">
           <h3 className="font-semibold text-sm">Routine Performance</h3>
           <ShareButton section="Routines" sectionRef={routinesRef} />
         </div>
-        <div className="flex flex-col gap-6">
+        <div className="flex flex-col gap-6 w-full">
           {routineStats.map((routine) => {
             const milestone = getMilestoneProgress(routine.currentStreak);
             return (
               <div
                 key={routine.routineId}
-                className="rounded-xl bg-muted/20 hover:bg-muted/30 transition-colors px-5 py-6 flex flex-col gap-4 shadow-sm"
+                className="rounded-xl bg-muted/20 hover:bg-muted/30 transition-colors px-5 py-6 flex flex-col gap-4 shadow-sm w-full"
+                style={{maxWidth:'100%'}}
               >
                 {/* Header row */}
-                <div className="flex items-center gap-4">
+                <div className="flex items-center gap-4 w-full">
                   <div className="text-4xl flex-shrink-0 mr-2">{routine.routineIcon}</div>
                   <div className="flex-1 min-w-0">
-                    <div className="flex items-center justify-between gap-2">
-                      <span className="font-semibold text-lg truncate" style={{lineHeight:1.2}}>{routine.routineName}</span>
-                      <span className="font-bold text-xl text-primary">{routine.completionRate}%</span>
+                    <div className="flex items-center justify-between gap-2 w-full">
+                      <span className="font-semibold text-lg truncate block" style={{lineHeight:1.2, maxWidth:'70%'}}>{routine.routineName}</span>
+                      <span className="font-bold text-xl text-primary whitespace-nowrap">{routine.completionRate}%</span>
                     </div>
-                    <Progress value={routine.completionRate} className="h-2 mt-2" />
+                    <Progress value={routine.completionRate} className="h-2 mt-2 w-full" />
                   </div>
                 </div>
 
                 {/* Streak milestone */}
-                <div className="pt-3 border-t border-border/30">
-                  <div className="flex items-center justify-between mb-2">
+                <div className="pt-3 border-t border-border/30 w-full">
+                  <div className="flex items-center justify-between mb-2 w-full">
                     <div className="flex items-center gap-2">
                       <Flame className="h-4 w-4 text-orange-500" />
-                      <span className="text-sm font-medium">{routine.currentStreak} day streak</span>
+                      <span className="text-sm font-medium whitespace-nowrap">{routine.currentStreak} day streak</span>
                     </div>
-                    <span className="text-sm text-muted-foreground">
+                    <span className="text-sm text-muted-foreground whitespace-nowrap">
                       {milestone.remaining} to {getMilestoneLabel(milestone.milestone)}
                     </span>
                   </div>
-                  <div className="relative">
-                    <Progress value={milestone.progress} className="h-2" />
-                    <div className="flex justify-between mt-1 text-xs text-muted-foreground">
+                  <div className="relative w-full">
+                    <Progress value={milestone.progress} className="h-2 w-full" />
+                    <div className="flex justify-between mt-1 text-xs text-muted-foreground w-full">
                       <span>0</span>
                       <span>{milestone.milestone} days</span>
                     </div>

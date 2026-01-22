@@ -54,7 +54,7 @@ export function AchievementsModal({ unlockedAchievements, stats, children }: Ach
       <DialogTrigger asChild>
         {children}
       </DialogTrigger>
-      <DialogContent className="max-w-2xl max-h-[85vh] overflow-hidden flex flex-col">
+      <DialogContent className="max-w-3xl w-full sm:w-[600px] max-h-[85vh] overflow-hidden flex flex-col">
         <DialogHeader className="pb-4 border-b">
           <div className="flex items-center justify-between">
             <DialogTitle className="flex items-center gap-2 text-xl">
@@ -117,24 +117,25 @@ export function AchievementsModal({ unlockedAchievements, stats, children }: Ach
                         )}
                       >
                         <div className={cn(
-                          "text-3xl flex-shrink-0 w-12 h-12 flex items-center justify-center rounded-xl",
+                          "text-3xl flex-shrink-0 w-14 h-14 flex items-center justify-center rounded-xl",
                           isUnlocked ? "bg-primary/10" : "bg-muted/50 grayscale opacity-50"
                         )}>
                           {achievement.icon}
                         </div>
-                        <div className="flex-1 min-w-0">
-                          <div className="flex items-center gap-2 mb-1">
-                            <span className={cn("font-semibold", isUnlocked ? "text-foreground" : "text-muted-foreground")}>
+                        <div className="flex-1 min-w-0 flex flex-col gap-1">
+                          <div className="flex flex-wrap items-center gap-2 mb-0.5 min-w-0">
+                            <span className={cn("font-semibold break-words text-base", isUnlocked ? "text-foreground" : "text-muted-foreground")}
+                              style={{wordBreak:'break-word', lineHeight:1.2, maxWidth:'100%'}}>
                               {achievement.name}
                             </span>
                             {isUnlocked && (
                               <CheckCircle2 className="h-4 w-4 text-emerald-500 flex-shrink-0" />
                             )}
                           </div>
-                          <p className="text-sm text-muted-foreground mb-2">{achievement.description}</p>
+                          <p className="text-sm text-muted-foreground mb-1 break-words" style={{wordBreak:'break-word', maxWidth:'100%'}}>{achievement.description}</p>
                           {!isUnlocked && (
-                            <div className="flex items-center gap-3">
-                              <Progress value={progressData.progress} className="h-1.5 flex-1" />
+                            <div className="flex items-center gap-3 w-full">
+                              <Progress value={progressData.progress} className="h-1.5 flex-1 min-w-0" />
                               <span className="text-xs text-muted-foreground whitespace-nowrap">
                                 {progressData.progressLabel}
                               </span>
@@ -142,12 +143,12 @@ export function AchievementsModal({ unlockedAchievements, stats, children }: Ach
                           )}
                         </div>
                         {isUnlocked ? (
-                          <Badge variant="outline" className="text-emerald-600 border-emerald-500/30 bg-emerald-500/10">
+                          <Badge variant="outline" className="text-emerald-600 border-emerald-500/30 bg-emerald-500/10 ml-2 whitespace-nowrap">
                             Unlocked
                           </Badge>
                         ) : (
-                          <div className="text-right">
-                            <div className="text-sm font-medium text-muted-foreground">
+                          <div className="text-right min-w-[3.5rem]">
+                            <div className="text-sm font-medium text-muted-foreground whitespace-nowrap">
                               {progressData.remaining} left
                             </div>
                           </div>
