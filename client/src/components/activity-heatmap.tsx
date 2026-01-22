@@ -23,29 +23,35 @@ function formatDisplayDate(date: Date): string {
 }
 
 export function ActivityHeatmap({ completions, days = 365 }: ActivityHeatmapProps) {
-    // Generate calendar days
+    // Generate calendar days, auto-fit to data range
     const calendarData = useMemo(() => {
         const today = new Date();
-        
-        // If we have completions, start from the earliest completion date (max days ago)
         let startDate = subDays(today, days);
-        
+        let minWeeks = 8; // Always show at least 8 weeks
+        let maxWeeks = 52; // Never show more than 1 year
+
         if (completions.length > 0) {
-            // Find earliest completion
+            // Find earliest and latest completion
             const sortedDates = completions.map(c => c.date).sort();
             const earliestCompletion = sortedDates[0];
-            if (earliestCompletion) {
-                const earliestDate = parseISO(earliestCompletion);
-                // Use the later of: earliest completion or days ago
-                if (earliestDate > startDate) {
-                    startDate = earliestDate;
-                }
+            const latestCompletion = sortedDates[sortedDates.length - 1];
+            if (earliestCompletion && latestCompletion) {
+                const earliestDate = startOfWeek(parseISO(earliestCompletion));
+                const latestDate = parseISO(latestCompletion);
+                // Calculate number of weeks between earliest and today (or latest)
+                const msPerWeek = 7 * 24 * 60 * 60 * 1000;
+                let weekCount = Math.ceil((today.getTime() - earliestDate.getTime()) / msPerWeek);
+                if (weekCount < minWeeks) weekCount = minWeeks;
+                if (weekCount > maxWeeks) weekCount = maxWeeks;
+                startDate = subDays(today, weekCount * 7 - 1);
             }
+        } else {
+            // No completions, show minWeeks
+            startDate = subDays(today, minWeeks * 7 - 1);
         }
-        
+
         // Align to start of week for cleanliness
         const start = startOfWeek(startDate);
-
         const dates = eachDayOfInterval({
             start: start,
             end: today
@@ -54,23 +60,18 @@ export function ActivityHeatmap({ completions, days = 365 }: ActivityHeatmapProp
         // Group completions by date using the exact date string from completions
         const completionMap = new Map<string, number>();
         completions.forEach(c => {
-            // Use the date directly from completion (already in YYYY-MM-DD format)
             const dateKey = c.date;
             completionMap.set(dateKey, (completionMap.get(dateKey) || 0) + 1);
         });
 
         return dates.map(date => {
-            // Use local date formatting to match completion date format
             const dateKey = formatLocalDate(date);
             const count = completionMap.get(dateKey) || 0;
-
-            // Determine intensity level (0-4)
             let level = 0;
             if (count > 0) level = 1;
             if (count > 2) level = 2;
             if (count > 4) level = 3;
             if (count > 6) level = 4;
-
             return {
                 date,
                 dateKey,
