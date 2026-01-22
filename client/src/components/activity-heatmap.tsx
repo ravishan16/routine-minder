@@ -1,7 +1,7 @@
 import { useMemo } from "react";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
 import { cn } from "@/lib/utils";
-import { format, subDays, eachDayOfInterval, startOfWeek, getMonth, getYear } from "date-fns";
+import { subDays, eachDayOfInterval, startOfWeek, getMonth, getYear, parseISO } from "date-fns";
 import type { Completion } from "@/lib/schema";
 
 interface ActivityHeatmapProps {
@@ -17,11 +17,32 @@ function formatLocalDate(date: Date): string {
     return `${year}-${month}-${day}`;
 }
 
+// Format for display
+function formatDisplayDate(date: Date): string {
+    return date.toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' });
+}
+
 export function ActivityHeatmap({ completions, days = 365 }: ActivityHeatmapProps) {
     // Generate calendar days
     const calendarData = useMemo(() => {
         const today = new Date();
-        const startDate = subDays(today, days);
+        
+        // If we have completions, start from the earliest completion date (max days ago)
+        let startDate = subDays(today, days);
+        
+        if (completions.length > 0) {
+            // Find earliest completion
+            const sortedDates = completions.map(c => c.date).sort();
+            const earliestCompletion = sortedDates[0];
+            if (earliestCompletion) {
+                const earliestDate = parseISO(earliestCompletion);
+                // Use the later of: earliest completion or days ago
+                if (earliestDate > startDate) {
+                    startDate = earliestDate;
+                }
+            }
+        }
+        
         // Align to start of week for cleanliness
         const start = startOfWeek(startDate);
 
@@ -30,15 +51,16 @@ export function ActivityHeatmap({ completions, days = 365 }: ActivityHeatmapProp
             end: today
         });
 
-        // Group completions by date using local date format
+        // Group completions by date using the exact date string from completions
         const completionMap = new Map<string, number>();
         completions.forEach(c => {
+            // Use the date directly from completion (already in YYYY-MM-DD format)
             const dateKey = c.date;
             completionMap.set(dateKey, (completionMap.get(dateKey) || 0) + 1);
         });
 
         return dates.map(date => {
-            // Use local date formatting instead of format() which may have timezone issues
+            // Use local date formatting to match completion date format
             const dateKey = formatLocalDate(date);
             const count = completionMap.get(dateKey) || 0;
 
@@ -96,7 +118,7 @@ export function ActivityHeatmap({ completions, days = 365 }: ActivityHeatmapProp
                                         />
                                     </TooltipTrigger>
                                     <TooltipContent side="top" className="text-xs">
-                                        <p className="font-semibold">{format(day.date, "MMM d, yyyy")}</p>
+                                        <p className="font-semibold">{formatDisplayDate(day.date)}</p>
                                         <p className="text-muted-foreground">
                                             {day.count} {day.count === 1 ? "routine" : "routines"} completed
                                         </p>

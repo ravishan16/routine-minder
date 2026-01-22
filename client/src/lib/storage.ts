@@ -137,7 +137,7 @@ type UserStats = { bestStreak: number; totalXp: number; level: number };
 async function syncFromServer(): Promise<void> {
   const [routines, completions, userStats] = await Promise.all([
     api<Routine[]>("/api/routines"),
-    api<Completion[]>("/api/completions?days=30"),
+    api<Completion[]>("/api/completions?days=365"), // Fetch full year for heatmap
     api<UserStats>("/api/user/stats"),
   ]);
 
@@ -159,7 +159,7 @@ async function syncFromServer(): Promise<void> {
 export async function syncFromServerAfterGoogleSignIn(): Promise<boolean> {
   const [routines, completions, userStats] = await Promise.all([
     api<Routine[]>("/api/routines"),
-    api<Completion[]>("/api/completions?days=30"),
+    api<Completion[]>("/api/completions?days=365"), // Fetch full year for heatmap
     api<UserStats>("/api/user/stats"),
   ]);
 

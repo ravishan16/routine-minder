@@ -316,11 +316,24 @@ export default function DashboardPage() {
           </div>
         </div>
         <ActivityHeatmap completions={completions} days={365} />
-        <div className="mt-3 pt-3 border-t border-border/30 flex justify-between text-xs text-muted-foreground">
-          <span>{new Date(new Date().setFullYear(new Date().getFullYear() - 1)).toLocaleDateString('en-US', { month: 'short', year: 'numeric' })}</span>
-          <span>{completions.length} total completions</span>
-          <span>{new Date().toLocaleDateString('en-US', { month: 'short', year: 'numeric' })}</span>
-        </div>
+        {completions.length > 0 && (
+          <div className="mt-3 pt-3 border-t border-border/30 flex justify-between text-xs text-muted-foreground">
+            <span>
+              {(() => {
+                const sortedDates = completions.map(c => c.date).sort();
+                const earliest = sortedDates[0];
+                if (earliest) {
+                  const [year, month] = earliest.split('-');
+                  const date = new Date(parseInt(year), parseInt(month) - 1);
+                  return date.toLocaleDateString('en-US', { month: 'short', year: 'numeric' });
+                }
+                return '';
+              })()}
+            </span>
+            <span>{completions.length} total completions</span>
+            <span>{new Date().toLocaleDateString('en-US', { month: 'short', year: 'numeric' })}</span>
+          </div>
+        )}
       </div>
 
       {/* Achievements Section */}
