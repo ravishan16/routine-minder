@@ -215,17 +215,24 @@ export function startBackgroundSync(): void {
 
 export const routinesApi = {
   getAll: async (): Promise<Routine[]> => {
-    return getFromStorage<Routine[]>(KEYS.routines, []);
+    const routines = getFromStorage<Routine[]>(KEYS.routines, []);
+    // Deduplicate by ID (keep first occurrence)
+    const seen = new Set<string>();
+    return routines.filter(r => {
+      if (seen.has(r.id)) return false;
+      seen.add(r.id);
+      return true;
+    });
   },
 
   getDaily: async (date: string): Promise<(Routine & { 
     completedCategories: string[];
     isFullyCompleted: boolean;
   })[]> => {
-    const routines = getFromStorage<Routine[]>(KEYS.routines, []);
+    const allRoutines = await routinesApi.getAll();
     const completions = getFromStorage<Completion[]>(KEYS.completions, []);
 
-    return routines
+    return allRoutines
       .filter((r) => r.isActive)
       .map((r) => {
         // Get all completed time categories for this routine on this date

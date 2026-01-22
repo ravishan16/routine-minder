@@ -1,26 +1,24 @@
 import { useState, useRef } from "react";
 import { useQuery } from "@tanstack/react-query";
 import {
-  Flame, Trophy, CheckCircle2, Target, Sun, Moon, Share2,
-  TrendingUp, Zap, Award, Calendar, ChevronRight
+  Flame, Sun, Moon, Share2, Zap, Award, Calendar, ChevronRight, Trophy,
+  TrendingUp, Target
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Progress } from "@/components/ui/progress";
-import { Badge } from "@/components/ui/badge";
 import { useTheme } from "@/components/theme-provider";
 import { useToast } from "@/hooks/use-toast";
 import { dashboardApi, routinesApi } from "@/lib/storage";
 import { ActivityHeatmap } from "@/components/activity-heatmap";
+import { AchievementsModal } from "@/components/achievements-modal";
 import {
   getPeriodDays,
   getPeriodLabel,
   getAchievement,
   getAchievementProgress,
-  getNextStreakMilestone,
   ACHIEVEMENTS,
   type Period,
   type Achievement,
-  type AchievementProgress
 } from "@/lib/achievements";
 import {
   calculateGamificationStats,
@@ -36,10 +34,7 @@ export default function DashboardPage() {
   const { toast } = useToast();
   const [period, setPeriod] = useState<Period>("7d");
   const [isSharing, setIsSharing] = useState(false);
-
-  // Refs for shareable elements
   const statsCardRef = useRef<HTMLDivElement>(null);
-  const achievementCardRef = useRef<HTMLDivElement>(null);
 
   const { data: routines = [] } = useQuery<Routine[]>({
     queryKey: ["routines"],
@@ -54,27 +49,30 @@ export default function DashboardPage() {
   const savedBestStreak = dashboardApi.getBestStreak();
   const periodDays = getPeriodDays(period);
 
-  // Calculate gamification stats
   const stats: GamificationStats | null = routines.length > 0 || completions.length > 0
     ? calculateGamificationStats(routines, completions, periodDays, savedBestStreak)
     : null;
 
-  // Calculate per-routine stats
+  // Deduplicate routines by ID
+  const uniqueRoutineIds = new Set<string>();
   const routineStats: RoutineStats[] = routines
-    .filter(r => r.isActive)
+    .filter(r => {
+      if (!r.isActive || uniqueRoutineIds.has(r.id)) return false;
+      uniqueRoutineIds.add(r.id);
+      return true;
+    })
     .map(r => calculateRoutineStats(r, completions, periodDays))
     .sort((a, b) => b.completionRate - a.completionRate);
 
-  // Generate shareable image from element
+  // Share handlers
   const generateShareImage = async (element: HTMLElement): Promise<Blob | null> => {
     try {
       const canvas = await html2canvas(element, {
-        backgroundColor: theme === "dark" ? "#1a1a1a" : "#ffffff",
+        backgroundColor: theme === "dark" ? "#0f172a" : "#ffffff",
         scale: 2,
         logging: false,
         useCORS: true,
       });
-
       return new Promise((resolve) => {
         canvas.toBlob((blob) => resolve(blob), "image/png", 1.0);
       });
@@ -84,23 +82,16 @@ export default function DashboardPage() {
     }
   };
 
-  // Share image (uses Web Share API if available, otherwise downloads)
   const shareImage = async (blob: Blob, filename: string) => {
     const file = new File([blob], filename, { type: "image/png" });
-
     if (navigator.canShare?.({ files: [file] })) {
       try {
-        await navigator.share({
-          files: [file],
-          title: "My Routine Minder Stats",
-        });
+        await navigator.share({ files: [file], title: "My Routine Minder Stats" });
         return true;
       } catch {
-        // User cancelled or share failed
+        // User cancelled
       }
     }
-
-    // Fallback: download image
     const url = URL.createObjectURL(blob);
     const a = document.createElement("a");
     a.href = url;
@@ -111,255 +102,31 @@ export default function DashboardPage() {
     return true;
   };
 
-  // Share overall stats using the Bento Grid Card
   const handleShareStats = async () => {
     if (!statsCardRef.current || isSharing) return;
     setIsSharing(true);
-
     const blob = await generateShareImage(statsCardRef.current);
     if (blob) {
-      await shareImage(blob, `routine-minder-stats-${new Date().toISOString().split("T")[0]}.png`);
-    }
-    setIsSharing(false);
-  };
-
-  // Share specific achievement - Instagram Story Style
-  const handleShareAchievement = async (achievement: Achievement) => {
-    setIsSharing(true);
-
-    const tempDiv = document.createElement("div");
-    Object.assign(tempDiv.style, {
-      position: "absolute",
-      left: "-9999px",
-      width: "1080px",
-      height: "1920px", // Instagram Story Aspect Ratio
-      padding: "120px 80px",
-      background: "linear-gradient(135deg, #FF6B6B 0%, #E0F2FE 100%)", // Coral to soft blue
-      display: "flex",
-      flexDirection: "column",
-      alignItems: "center",
-      justifyContent: "center",
-      fontFamily: "Inter, system-ui, sans-serif",
-      color: "#1f2937"
-    });
-
-    if (theme === "dark") {
-      tempDiv.style.background = "linear-gradient(135deg, #18181b 0%, #27272a 100%)";
-      tempDiv.style.color = "#ffffff";
-    }
-
-    tempDiv.innerHTML = `
-      <div style="
-        background: rgba(255, 255, 255, 0.2);
-        backdrop-filter: blur(20px);
-        padding: 80px;
-        border-radius: 48px;
-        border: 2px solid rgba(255, 255, 255, 0.3);
-        box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.25);
-        display: flex;
-        flex-direction: column;
-        align-items: center;
-        width: 100%;
-        text-align: center;
-      ">
-        <div style="font-size: 180px; margin-bottom: 40px; filter: drop-shadow(0 10px 20px rgba(0,0,0,0.1));">${achievement.icon}</div>
-        <div style="
-          font-size: 24px; 
-          text-transform: uppercase; 
-          letter-spacing: 4px; 
-          font-weight: 600; 
-          margin-bottom: 20px; 
-          opacity: 0.8;
-        ">Achievement Unlocked</div>
-        <div style="
-          font-size: 64px; 
-          font-weight: 800; 
-          margin-bottom: 24px; 
-          line-height: 1.1;
-          background: linear-gradient(to right, #FF6B6B, #F97316);
-          -webkit-background-clip: text;
-          -webkit-text-fill-color: transparent; 
-          ${theme === "dark" ? "background: linear-gradient(to right, #fb7185, #a78bfa);" : ""}
-        ">${achievement.name}</div>
-        <div style="
-          font-size: 32px; 
-          opacity: 0.9; 
-          line-height: 1.5; 
-          max-width: 80%;
-        ">${achievement.description}</div>
-      </div>
-      
-      <div style="margin-top: auto; display: flex; align-items: center; gap: 24px; opacity: 0.8;">
-        <div style="font-size: 48px;">✨</div>
-        <div style="font-size: 36px; font-weight: 600;">Routine Minder</div>
-      </div>
-    `;
-
-    document.body.appendChild(tempDiv);
-    const blob = await generateShareImage(tempDiv);
-    document.body.removeChild(tempDiv);
-
-    if (blob) {
-      await shareImage(blob, `achievement-${achievement.key}.png`);
-    }
-    setIsSharing(false);
-  };
-
-  // Share routine stats - Instagram Story Style
-  const handleShareRoutine = async (routine: RoutineStats) => {
-    setIsSharing(true);
-
-    const tempDiv = document.createElement("div");
-    Object.assign(tempDiv.style, {
-      position: "absolute",
-      left: "-9999px",
-      width: "1080px",
-      height: "1920px",
-      padding: "120px",
-      background: theme === "dark"
-        ? "linear-gradient(135deg, #0f172a 0%, #1e293b 100%)"
-        : "linear-gradient(135deg, #fff1f2 0%, #dbeafe 100%)",
-      display: "flex",
-      flexDirection: "column",
-      justifyContent: "space-between",
-      fontFamily: "Inter, system-ui, sans-serif",
-      color: theme === "dark" ? "#fff" : "#1f2937"
-    });
-
-    const cardBg = theme === "dark" ? "rgba(30, 41, 59, 0.7)" : "rgba(255, 255, 255, 0.7)";
-    const border = theme === "dark" ? "rgba(255, 255, 255, 0.1)" : "rgba(255, 255, 255, 0.5)";
-
-    tempDiv.innerHTML = `
-        <div>
-          <div style="display: flex; align-items: center; gap: 24px; margin-bottom: 60px;">
-             <span style="font-size: 48px;">📊</span>
-             <span style="font-size: 36px; font-weight: 600; opacity: 0.7;">Routine Stats</span>
-          </div>
-
-          <div style="font-size: 160px; margin-bottom: 40px; text-align: center; filter: drop-shadow(0 20px 30px rgba(0,0,0,0.15));">${routine.routineIcon}</div>
-          <h1 style="font-size: 80px; font-weight: 800; text-align: center; margin-bottom: 80px; line-height: 1.1;">${routine.routineName}</h1>
-          
-          <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 40px;">
-            <div style="
-              background: ${cardBg};
-              backdrop-filter: blur(20px);
-              padding: 60px 40px;
-              border-radius: 40px;
-              border: 2px solid ${border};
-              text-align: center;
-              box-shadow: 0 20px 40px -10px rgba(0,0,0,0.1);
-            ">
-              <div style="font-size: 96px; font-weight: 800; color: #f97316; margin-bottom: 16px;">${routine.currentStreak}</div>
-              <div style="font-size: 32px; font-weight: 600; opacity: 0.7;">Day Streak</div>
-            </div>
-            
-            <div style="
-               background: ${cardBg};
-               backdrop-filter: blur(20px);
-               padding: 60px 40px;
-               border-radius: 40px;
-               border: 2px solid ${border};
-               text-align: center;
-               box-shadow: 0 20px 40px -10px rgba(0,0,0,0.1);
-             ">
-               <div style="font-size: 96px; font-weight: 800; color: #22c55e; margin-bottom: 16px;">${routine.completionRate}%</div>
-               <div style="font-size: 32px; font-weight: 600; opacity: 0.7;">Consistency</div>
-             </div>
-          </div>
-        </div>
-        
-        <div style="text-align: center; font-size: 32px; opacity: 0.6; font-weight: 500;">
-           Build better habits with Routine Minder
-        </div>
-      `;
-
-    document.body.appendChild(tempDiv);
-    const blob = await generateShareImage(tempDiv);
-    document.body.removeChild(tempDiv);
-
-    if (blob) {
-      await shareImage(blob, `routine-${routine.routineName.toLowerCase().replace(/\s+/g, "-")}.png`);
-    }
-    setIsSharing(false);
-  };
-
-  // Share Milestone - Instagram Story Style
-  const handleShareMilestone = async (progressData: AchievementProgress) => {
-    setIsSharing(true);
-
-    const tempDiv = document.createElement("div");
-    Object.assign(tempDiv.style, {
-      position: "absolute",
-      left: "-9999px",
-      width: "1080px",
-      height: "1920px",
-      padding: "120px 80px",
-      background: theme === "dark"
-        ? "linear-gradient(to bottom, #0f172a, #334155)"
-        : "linear-gradient(to bottom, #f0f9ff, #e0f2fe)",
-      display: "flex",
-      flexDirection: "column",
-      justifyContent: "center",
-      alignItems: "center",
-      fontFamily: "Inter, system-ui, sans-serif",
-      color: theme === "dark" ? "#ffffff" : "#0f172a"
-    });
-
-    const cardBg = theme === "dark" ? "rgba(255,255,255,0.05)" : "rgba(255,255,255,0.6)";
-
-    tempDiv.innerHTML = `
-        <div style="
-          background: ${cardBg};
-          backdrop-filter: blur(20px);
-          border-radius: 60px;
-          padding: 100px 60px;
-          width: 100%;
-          text-align: center;
-          border: 1px solid rgba(255,255,255,0.2);
-          box-shadow: 0 50px 100px -20px rgba(0,0,0,0.3);
-        ">
-           <div style="font-size: 32px; font-weight: 700; text-transform: uppercase; letter-spacing: 4px; opacity: 0.6; margin-bottom: 60px;">Next Milestone</div>
-           
-           <div style="font-size: 160px; margin-bottom: 40px; filter: grayscale(1) opacity(0.5);">${progressData.achievement.icon}</div>
-           
-           <div style="font-size: 64px; font-weight: 800; margin-bottom: 24px;">${progressData.achievement.name}</div>
-           
-           <div style="height: 32px; background: rgba(128,128,128,0.2); border-radius: 16px; margin: 60px 0; overflow: hidden;">
-             <div style="height: 100%; width: ${progressData.progress}%; background: #3b82f6; border-radius: 16px;"></div>
-           </div>
-           
-           <div style="font-size: 40px; font-weight: 600; color: #3b82f6; margin-bottom: 20px;">${progressData.remaining} to go</div>
-           <div style="font-size: 32px; opacity: 0.7;">Usually unlocked in a few days!</div>
-        </div>
-        
-        <div style="margin-top: 100px; font-size: 36px; font-weight: 600; opacity: 0.8;">Routine Minder</div>
-      `;
-
-    document.body.appendChild(tempDiv);
-    const blob = await generateShareImage(tempDiv);
-    document.body.removeChild(tempDiv);
-
-    if (blob) {
-      await shareImage(blob, `milestone-${progressData.achievement.key}.png`);
+      const dateStr = new Date().toISOString().split("T")[0];
+      await shareImage(blob, `routine-minder-stats-${dateStr}.png`);
     }
     setIsSharing(false);
   };
 
   if (!stats) {
     return (
-      <div className="p-4 space-y-6">
-        <div className="flex items-center justify-between">
-          <h1 className="text-2xl font-bold">Dashboard</h1>
+      <div className="p-4 pb-24 space-y-6 max-w-3xl mx-auto">
+        <div className="flex items-center justify-end">
           <Button variant="ghost" size="icon" onClick={toggleTheme}>
             {theme === "dark" ? <Sun className="h-5 w-5" /> : <Moon className="h-5 w-5" />}
           </Button>
         </div>
         <div className="glass-card p-12 text-center space-y-6 animate-in fade-in zoom-in-95 duration-500">
-          <div className="text-8xl animate-bounce">📊</div>
+          <div className="text-7xl">📊</div>
           <div>
             <h2 className="text-2xl font-bold">No Data Yet</h2>
             <p className="text-muted-foreground mt-2 max-w-sm mx-auto">
-              Start completing routines to see your visual breakdown and unlock achievements!
+              Start completing routines to see your progress and unlock achievements!
             </p>
           </div>
         </div>
@@ -367,268 +134,237 @@ export default function DashboardPage() {
     );
   }
 
-  // Unlocked achievements (show up to 6)
+  // Get unlocked and next achievements
   const unlockedAchievementDetails = stats.unlockedAchievements
     .map(key => getAchievement(key))
-    .filter(Boolean)
-    .slice(-6);
+    .filter(Boolean) as Achievement[];
 
-  // Next achievements to unlock
   const lockedAchievements = ACHIEVEMENTS
     .filter(a => !stats.unlockedAchievements.includes(a.key))
     .slice(0, 3);
 
   return (
-    <div className="p-4 pb-24 space-y-6 max-w-5xl mx-auto">
-      {/* Period selector and theme toggle */}
-      <div className="flex items-center justify-end gap-3">
-        <div className="flex gap-1 p-1 bg-muted/30 rounded-lg">
-            {(["7d", "30d", "1y", "ytd"] as Period[]).map((p) => (
-              <Button
-                key={p}
-                variant={period === p ? "secondary" : "ghost"}
-                size="sm"
-                onClick={() => setPeriod(p)}
-                className="h-8 px-3 text-xs"
-              >
-                {getPeriodLabel(p)}
-              </Button>
-            ))}
-          </div>
-        <Button variant="outline" size="icon" onClick={toggleTheme} className="h-10 w-10">
+    <div className="p-4 pb-24 space-y-5 max-w-3xl mx-auto">
+      {/* Header with period selector */}
+      <div className="flex items-center justify-between">
+        <div className="flex gap-1 p-1 bg-muted/40 rounded-lg">
+          {(["7d", "30d", "1y", "ytd"] as Period[]).map((p) => (
+            <Button
+              key={p}
+              variant={period === p ? "secondary" : "ghost"}
+              size="sm"
+              onClick={() => setPeriod(p)}
+              className="h-8 px-3 text-xs font-medium"
+            >
+              {getPeriodLabel(p)}
+            </Button>
+          ))}
+        </div>
+        <Button variant="ghost" size="icon" onClick={toggleTheme} className="h-9 w-9">
           {theme === "dark" ? <Sun className="h-5 w-5" /> : <Moon className="h-5 w-5" />}
         </Button>
       </div>
 
-      {/* Bento Grid */}
-      <div className="grid grid-cols-1 md:grid-cols-4 gap-4 auto-rows-min">
-
-        {/* Main Stats Card - Spans 2 cols on md */}
-        <div ref={statsCardRef} className="glass-card md:col-span-2 p-6 flex flex-col justify-between relative overflow-hidden group">
-          <div className="absolute top-0 right-0 p-32 bg-primary/5 rounded-full blur-3xl -mr-16 -mt-16 pointer-events-none"></div>
-
-          <div className="relative z-10">
-            <div className="flex justify-between items-start">
-              <div className="space-y-1">
-                <span className="text-sm font-medium text-muted-foreground uppercase tracking-wider">Level {stats.level.level}</span>
-                <h2 className="text-3xl font-bold text-primary">{stats.level.name}</h2>
-              </div>
-              <div className="text-right">
-                <div className="text-3xl font-bold tracking-tight">{stats.totalXP.toLocaleString()}</div>
-                <div className="text-xs text-muted-foreground font-medium uppercase tracking-wider">Total XP</div>
-              </div>
-            </div>
-
-            <div className="mt-8 space-y-3">
-              <div className="flex justify-between text-sm font-medium">
-                <span className="text-muted-foreground">Progress to Level {stats.level.level + 1}</span>
-                <span className="text-primary">{stats.nextLevelProgress}%</span>
-              </div>
-              <Progress value={stats.nextLevelProgress} className="h-2.5 bg-primary/20" />
-              <p className="text-xs text-muted-foreground text-right">{stats.xpToNextLevel} XP remaining</p>
-            </div>
+      {/* Stats Overview Card */}
+      <div ref={statsCardRef} className="glass-card p-5 space-y-5">
+        {/* Level & XP */}
+        <div className="flex items-start justify-between">
+          <div>
+            <p className="text-xs font-medium text-muted-foreground uppercase tracking-wider">Level {stats.level.level}</p>
+            <h2 className="text-2xl font-bold text-primary">{stats.level.name}</h2>
           </div>
-
-          {stats.streakMultiplier.label && (
-            <div className="mt-6 inline-flex items-center gap-2 px-3 py-1.5 rounded-full bg-yellow-500/10 border border-yellow-500/20 text-yellow-600 dark:text-yellow-400 text-sm font-medium w-fit">
-              <Zap className="h-4 w-4" />
-              {stats.streakMultiplier.label} — {stats.streakMultiplier.multiplier}x Multiplier Active
-            </div>
-          )}
+          <div className="text-right">
+            <div className="text-2xl font-bold">{stats.totalXP.toLocaleString()}</div>
+            <p className="text-xs text-muted-foreground uppercase tracking-wider">XP</p>
+          </div>
         </div>
 
-        {/* Current Steak */}
-        <div className="glass-card p-6 flex flex-col items-center justify-center text-center space-y-2">
-          <div className="p-3 bg-orange-500/10 rounded-full mb-2">
-            <Flame className="h-8 w-8 text-orange-500 text-shadow-sm" />
+        {/* Progress bar */}
+        <div className="space-y-2">
+          <div className="flex justify-between text-xs">
+            <span className="text-muted-foreground">Level {stats.level.level + 1}</span>
+            <span className="font-medium text-primary">{stats.nextLevelProgress}%</span>
           </div>
-          <div className="text-4xl font-bold tracking-tight">{stats.currentStreak}</div>
-          <p className="text-sm font-medium text-muted-foreground">Current Streak</p>
+          <Progress value={stats.nextLevelProgress} className="h-2" />
+          <p className="text-xs text-muted-foreground text-right">{stats.xpToNextLevel} XP remaining</p>
         </div>
 
-        {/* Completion Rate */}
-        <div className="glass-card p-6 flex flex-col items-center justify-center text-center space-y-2">
-          <div className="relative flex items-center justify-center">
-            <svg className="h-20 w-20 transform -rotate-90">
-              <circle className="text-muted/20" strokeWidth="8" stroke="currentColor" fill="transparent" r="32" cx="40" cy="40" />
-              <circle
-                className="text-primary transition-all duration-1000 ease-out"
-                strokeWidth="8"
-                strokeDasharray={200}
-                strokeDashoffset={200 - (200 * stats.completionRate / 100)}
-                strokeLinecap="round"
-                stroke="currentColor"
-                fill="transparent"
-                r="32" cx="40" cy="40"
-              />
-            </svg>
-            <span className="absolute text-xl font-bold">{stats.completionRate}%</span>
+        {stats.streakMultiplier.label && (
+          <div className="inline-flex items-center gap-2 px-3 py-1.5 rounded-full bg-amber-500/10 border border-amber-500/20 text-amber-600 dark:text-amber-400 text-xs font-medium">
+            <Zap className="h-3.5 w-3.5" />
+            {stats.streakMultiplier.label} — {stats.streakMultiplier.multiplier}x XP
           </div>
-          <p className="text-sm font-medium text-muted-foreground">Completion Rate</p>
-        </div>
+        )}
 
-        {/* Activity Heatmap - Spans Full Width */}
-        <div className="glass-card md:col-span-4 p-6 space-y-4">
-          <div className="flex items-center gap-2 mb-2">
-            <Calendar className="h-5 w-5 text-primary" />
-            <h3 className="font-semibold">Activity Log</h3>
-          </div>
-          <ActivityHeatmap completions={completions} days={365} />
-        </div>
-
-        {/* Key Metrics Row */}
-        <div className="glass-card md:col-span-2 p-6 flex items-center justify-around">
+        {/* Key Stats Grid */}
+        <div className="grid grid-cols-4 gap-3 pt-3 border-t border-border/50">
           <div className="text-center">
-            <div className="text-2xl font-bold mb-1">{stats.totalCompletions}</div>
-            <div className="text-xs uppercase tracking-wider text-muted-foreground">Tasks Done</div>
+            <div className="flex items-center justify-center gap-1 mb-1">
+              <Flame className="h-4 w-4 text-orange-500" />
+            </div>
+            <div className="text-xl font-bold">{stats.currentStreak}</div>
+            <p className="text-[10px] text-muted-foreground uppercase">Streak</p>
           </div>
-          <div className="w-px h-12 bg-border"></div>
           <div className="text-center">
-            <div className="text-2xl font-bold mb-1">{stats.totalPerfectDays}</div>
-            <div className="text-xs uppercase tracking-wider text-muted-foreground">Perfect Days</div>
+            <div className="flex items-center justify-center gap-1 mb-1">
+              <Target className="h-4 w-4 text-emerald-500" />
+            </div>
+            <div className="text-xl font-bold">{stats.completionRate}%</div>
+            <p className="text-[10px] text-muted-foreground uppercase">Rate</p>
           </div>
-          <div className="w-px h-12 bg-border"></div>
           <div className="text-center">
-            <div className="text-2xl font-bold mb-1">{stats.bestStreak}</div>
-            <div className="text-xs uppercase tracking-wider text-muted-foreground">Best Streak</div>
+            <div className="flex items-center justify-center gap-1 mb-1">
+              <TrendingUp className="h-4 w-4 text-blue-500" />
+            </div>
+            <div className="text-xl font-bold">{stats.totalCompletions}</div>
+            <p className="text-[10px] text-muted-foreground uppercase">Tasks</p>
+          </div>
+          <div className="text-center">
+            <div className="flex items-center justify-center gap-1 mb-1">
+              <Trophy className="h-4 w-4 text-yellow-500" />
+            </div>
+            <div className="text-xl font-bold">{stats.bestStreak}</div>
+            <p className="text-[10px] text-muted-foreground uppercase">Best</p>
           </div>
         </div>
-
-        {/* Time Breakdown */}
-        <div className="glass-card md:col-span-2 p-6">
-          <h3 className="font-semibold mb-4 flex items-center gap-2">
-            <Sun className="h-4 w-4" /> Time of Day
-          </h3>
-          <div className="grid grid-cols-3 gap-2">
-            <div className="flex flex-col items-center p-2 rounded-lg bg-orange-500/5 hover:bg-orange-500/10 transition-colors">
-              <span className="text-xs text-muted-foreground mb-1">Morning</span>
-              <span className="font-bold text-lg">{stats.amCompletions}</span>
-            </div>
-            <div className="flex flex-col items-center p-2 rounded-lg bg-yellow-500/5 hover:bg-yellow-500/10 transition-colors">
-              <span className="text-xs text-muted-foreground mb-1">Noon</span>
-              <span className="font-bold text-lg">{stats.noonCompletions}</span>
-            </div>
-            <div className="flex flex-col items-center p-2 rounded-lg bg-indigo-500/5 hover:bg-indigo-500/10 transition-colors">
-              <span className="text-xs text-muted-foreground mb-1">Evening</span>
-              <span className="font-bold text-lg">{stats.pmCompletions}</span>
-            </div>
-          </div>
-        </div>
-
-        {/* Achievements - Full Width */}
-        <div ref={achievementCardRef} className="glass-card md:col-span-4 p-6 space-y-5">
-          <div className="flex items-center justify-between">
-            <h3 className="font-semibold flex items-center gap-2">
-              <Award className="h-5 w-5 text-primary" /> Achievements
-            </h3>
-            <Badge variant="outline" className="text-xs">{stats.unlockedAchievements.length} / {ACHIEVEMENTS.length}</Badge>
-          </div>
-
-          {/* Unlocked achievements - horizontal scroll */}
-          <div className="flex gap-3 overflow-x-auto pb-2 scrollbar-hide">
-            {unlockedAchievementDetails.map((achievement) => (
-              <button
-                key={achievement!.key}
-                onClick={() => handleShareAchievement(achievement!)}
-                disabled={isSharing}
-                className="flex-shrink-0 flex flex-col items-center p-4 w-24 rounded-xl bg-gradient-to-br from-primary/10 to-transparent border border-primary/20 hover:border-primary/40 transition-all hover:scale-105 active:scale-95 cursor-pointer"
-              >
-                <div className="text-3xl mb-2 filter drop-shadow-sm">{achievement!.icon}</div>
-                <div className="text-xs font-medium text-center leading-tight">{achievement!.name}</div>
-              </button>
-            ))}
-            {unlockedAchievementDetails.length === 0 && (
-              <div className="flex items-center gap-3 text-muted-foreground py-4">
-                <span className="text-2xl opacity-40">🏆</span>
-                <span className="text-sm">Complete tasks to unlock achievements!</span>
-              </div>
-            )}
-          </div>
-
-          {/* Up Next - compact inline */}
-          {lockedAchievements.length > 0 && (
-            <div className="pt-4 border-t border-border/30">
-              <p className="text-xs font-medium text-muted-foreground mb-3 uppercase tracking-wider">Up Next</p>
-              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3">
-                {lockedAchievements.slice(0, 3).map((achievement) => {
-                  const progressData = getAchievementProgress(achievement, {
-                    currentStreak: stats.currentStreak,
-                    bestStreak: stats.bestStreak,
-                    totalCompletions: stats.totalCompletions,
-                    totalPerfectDays: stats.totalPerfectDays,
-                    amCompletions: stats.amCompletions,
-                    noonCompletions: stats.noonCompletions,
-                    pmCompletions: stats.pmCompletions,
-                    level: stats.level,
-                  });
-                  return (
-                    <div key={achievement.key} className="flex items-center gap-3 p-3 rounded-lg bg-muted/20 hover:bg-muted/30 transition-colors">
-                      <div className="text-xl grayscale opacity-50">{achievement.icon}</div>
-                      <div className="flex-1 min-w-0">
-                        <div className="flex justify-between items-center gap-2">
-                          <span className="text-sm font-medium truncate">{achievement.name}</span>
-                          <span className="text-xs text-muted-foreground whitespace-nowrap">{progressData.remaining} left</span>
-                        </div>
-                        <Progress value={progressData.progress} className="h-1.5 mt-1.5" />
-                      </div>
-                    </div>
-                  );
-                })}
-              </div>
-            </div>
-          )}
-        </div>
-
-        {/* Routine Performance - Full Width */}
-        <div className="glass-card md:col-span-4 p-6 space-y-4">
-          <h3 className="font-semibold">Routine Performance</h3>
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
-            {routineStats.map(routine => (
-              <div
-                key={routine.routineId}
-                className="group flex items-center gap-4 p-4 rounded-xl bg-muted/20 hover:bg-muted/30 transition-colors border border-transparent hover:border-border/30"
-              >
-                <div className="text-3xl p-2 bg-background/50 rounded-xl group-hover:scale-110 transition-transform">
-                  {routine.routineIcon}
-                </div>
-                <div className="flex-1 min-w-0">
-                  <div className="flex items-center justify-between gap-2 mb-2">
-                    <span className="font-semibold truncate">{routine.routineName}</span>
-                    <span className="font-bold text-primary text-lg">{routine.completionRate}%</span>
-                  </div>
-                  <Progress value={routine.completionRate} className="h-2" />
-                  <div className="flex justify-between items-center mt-2">
-                    <span className="text-xs text-muted-foreground flex items-center gap-1">
-                      🔥 {routine.currentStreak} day streak
-                    </span>
-                    <Button
-                      variant="ghost"
-                      size="icon"
-                      className="h-6 w-6 text-muted-foreground hover:text-foreground opacity-0 group-hover:opacity-100 transition-opacity"
-                      onClick={() => handleShareRoutine(routine)}
-                    >
-                      <Share2 className="h-3 w-3" />
-                    </Button>
-                  </div>
-                </div>
-              </div>
-            ))}
-          </div>
-        </div>
-
       </div>
 
-      {/* Footer Share */}
-      <div className="flex justify-center pt-8">
+      {/* Activity Heatmap */}
+      <div className="glass-card p-5">
+        <div className="flex items-center gap-2 mb-4">
+          <Calendar className="h-4 w-4 text-primary" />
+          <h3 className="font-semibold text-sm">Activity</h3>
+          <div className="ml-auto flex items-center gap-1.5 text-[10px] text-muted-foreground">
+            <span>Less</span>
+            <div className="flex gap-0.5">
+              <div className="w-2.5 h-2.5 rounded-sm bg-muted/40" />
+              <div className="w-2.5 h-2.5 rounded-sm bg-emerald-400/40" />
+              <div className="w-2.5 h-2.5 rounded-sm bg-emerald-500/60" />
+              <div className="w-2.5 h-2.5 rounded-sm bg-emerald-500/80" />
+              <div className="w-2.5 h-2.5 rounded-sm bg-emerald-500" />
+            </div>
+            <span>More</span>
+          </div>
+        </div>
+        <ActivityHeatmap completions={completions} days={365} />
+      </div>
+
+      {/* Achievements Section */}
+      <div className="glass-card p-5 space-y-4">
+        <div className="flex items-center justify-between">
+          <div className="flex items-center gap-2">
+            <Award className="h-4 w-4 text-primary" />
+            <h3 className="font-semibold text-sm">Achievements</h3>
+          </div>
+          <AchievementsModal unlockedAchievements={stats.unlockedAchievements} stats={stats}>
+            <Button variant="ghost" size="sm" className="h-7 text-xs gap-1">
+              {stats.unlockedAchievements.length}/{ACHIEVEMENTS.length}
+              <ChevronRight className="h-3 w-3" />
+            </Button>
+          </AchievementsModal>
+        </div>
+
+        {/* Unlocked achievements */}
+        {unlockedAchievementDetails.length > 0 && (
+          <div className="flex gap-2 overflow-x-auto pb-1 scrollbar-hide">
+            {unlockedAchievementDetails.slice(-6).map((achievement) => (
+              <div
+                key={achievement.key}
+                className="flex-shrink-0 flex flex-col items-center p-3 w-20 rounded-lg bg-primary/5 border border-primary/10"
+              >
+                <div className="text-2xl mb-1">{achievement.icon}</div>
+                <div className="text-[10px] font-medium text-center leading-tight line-clamp-2">{achievement.name}</div>
+              </div>
+            ))}
+          </div>
+        )}
+
+        {/* Next to unlock */}
+        {lockedAchievements.length > 0 && (
+          <div className="space-y-2 pt-3 border-t border-border/30">
+            <p className="text-[10px] font-medium text-muted-foreground uppercase tracking-wider">Next to unlock</p>
+            {lockedAchievements.map((achievement) => {
+              const progressData = getAchievementProgress(achievement, stats);
+              return (
+                <div key={achievement.key} className="flex items-center gap-3">
+                  <div className="text-lg grayscale opacity-40">{achievement.icon}</div>
+                  <div className="flex-1 min-w-0">
+                    <div className="flex items-center justify-between gap-2 mb-1">
+                      <span className="text-xs font-medium truncate">{achievement.name}</span>
+                      <span className="text-[10px] text-muted-foreground">{progressData.remaining} left</span>
+                    </div>
+                    <Progress value={progressData.progress} className="h-1" />
+                  </div>
+                </div>
+              );
+            })}
+          </div>
+        )}
+      </div>
+
+      {/* Time of Day Stats */}
+      <div className="glass-card p-5">
+        <div className="flex items-center gap-2 mb-4">
+          <Sun className="h-4 w-4 text-primary" />
+          <h3 className="font-semibold text-sm">Time of Day</h3>
+        </div>
+        <div className="grid grid-cols-3 gap-3">
+          <div className="text-center p-3 rounded-lg bg-orange-500/5 border border-orange-500/10">
+            <div className="text-lg font-bold text-orange-600 dark:text-orange-400">{stats.amCompletions}</div>
+            <p className="text-[10px] text-muted-foreground uppercase mt-0.5">Morning</p>
+          </div>
+          <div className="text-center p-3 rounded-lg bg-yellow-500/5 border border-yellow-500/10">
+            <div className="text-lg font-bold text-yellow-600 dark:text-yellow-400">{stats.noonCompletions}</div>
+            <p className="text-[10px] text-muted-foreground uppercase mt-0.5">Noon</p>
+          </div>
+          <div className="text-center p-3 rounded-lg bg-indigo-500/5 border border-indigo-500/10">
+            <div className="text-lg font-bold text-indigo-600 dark:text-indigo-400">{stats.pmCompletions}</div>
+            <p className="text-[10px] text-muted-foreground uppercase mt-0.5">Evening</p>
+          </div>
+        </div>
+      </div>
+
+      {/* Routine Performance */}
+      <div className="glass-card p-5 space-y-4">
+        <h3 className="font-semibold text-sm">Routine Performance</h3>
+        <div className="space-y-3">
+          {routineStats.map((routine) => (
+            <div
+              key={routine.routineId}
+              className="flex items-center gap-3 p-3 rounded-lg bg-muted/20 hover:bg-muted/30 transition-colors"
+            >
+              <div className="text-2xl flex-shrink-0">{routine.routineIcon}</div>
+              <div className="flex-1 min-w-0">
+                <div className="flex items-center justify-between gap-2 mb-1.5">
+                  <span className="font-medium text-sm truncate">{routine.routineName}</span>
+                  <span className="font-bold text-primary">{routine.completionRate}%</span>
+                </div>
+                <Progress value={routine.completionRate} className="h-1.5" />
+                <div className="flex items-center justify-between mt-1.5">
+                  <span className="text-[10px] text-muted-foreground">
+                    🔥 {routine.currentStreak} day streak
+                  </span>
+                  <span className="text-[10px] text-muted-foreground">
+                    {routine.totalCompletions} total
+                  </span>
+                </div>
+              </div>
+            </div>
+          ))}
+        </div>
+      </div>
+
+      {/* Share Button */}
+      <div className="flex justify-center pt-4">
         <Button
           variant="outline"
-          size="lg"
-          className="shadow-sm hover:shadow-md transition-all gap-2"
+          size="sm"
+          className="gap-2"
           onClick={handleShareStats}
           disabled={isSharing}
         >
           <Share2 className="w-4 h-4" />
-          {isSharing ? "Generating..." : "Share Dashboard Overview"}
+          {isSharing ? "Generating..." : "Share Stats"}
         </Button>
       </div>
     </div>
