@@ -75,12 +75,12 @@ export function ActivityHeatmap({ completions, days = 365 }: ActivityHeatmapProp
                                     <TooltipTrigger asChild>
                                         <div
                                             className={cn(
-                                                "w-3 h-3 rounded-[2px] transition-colors",
-                                                day.level === 0 && "bg-muted/30",
-                                                day.level === 1 && "bg-primary/30",
-                                                day.level === 2 && "bg-primary/50",
-                                                day.level === 3 && "bg-primary/70",
-                                                day.level === 4 && "bg-primary"
+                                                "w-2.5 h-2.5 sm:w-3 sm:h-3 rounded-sm transition-colors cursor-pointer hover:ring-1 hover:ring-primary/50",
+                                                day.level === 0 && "bg-muted/40 dark:bg-muted/20",
+                                                day.level === 1 && "bg-emerald-400/40 dark:bg-emerald-500/40",
+                                                day.level === 2 && "bg-emerald-500/60 dark:bg-emerald-500/60",
+                                                day.level === 3 && "bg-emerald-500/80 dark:bg-emerald-400/80",
+                                                day.level === 4 && "bg-emerald-500 dark:bg-emerald-400"
                                             )}
                                         />
                                     </TooltipTrigger>

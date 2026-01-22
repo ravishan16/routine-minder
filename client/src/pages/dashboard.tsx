@@ -380,14 +380,9 @@ export default function DashboardPage() {
 
   return (
     <div className="p-4 pb-24 space-y-6 max-w-5xl mx-auto">
-      {/* Header */}
-      <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
-        <div>
-          <h1 className="text-3xl font-bold tracking-tight">Dashboard</h1>
-          <p className="text-muted-foreground mt-1">Your progress at a glance.</p>
-        </div>
-        <div className="flex items-center gap-3">
-          <div className="flex gap-1 p-1 bg-muted/30 rounded-lg">
+      {/* Period selector and theme toggle */}
+      <div className="flex items-center justify-end gap-3">
+        <div className="flex gap-1 p-1 bg-muted/30 rounded-lg">
             {(["7d", "30d", "1y", "ytd"] as Period[]).map((p) => (
               <Button
                 key={p}
@@ -400,10 +395,9 @@ export default function DashboardPage() {
               </Button>
             ))}
           </div>
-          <Button variant="outline" size="icon" onClick={toggleTheme} className="h-10 w-10">
-            {theme === "dark" ? <Sun className="h-5 w-5" /> : <Moon className="h-5 w-5" />}
-          </Button>
-        </div>
+        <Button variant="outline" size="icon" onClick={toggleTheme} className="h-10 w-10">
+          {theme === "dark" ? <Sun className="h-5 w-5" /> : <Moon className="h-5 w-5" />}
+        </Button>
       </div>
 
       {/* Bento Grid */}
@@ -521,61 +515,96 @@ export default function DashboardPage() {
           </div>
         </div>
 
-        {/* Achievements - Spans 2 */}
-        <div ref={achievementCardRef} className="glass-card md:col-span-2 p-6 space-y-4 max-h-[400px] overflow-y-auto custom-scrollbar">
-          <div className="flex items-center justify-between sticky top-0 bg-background/80 backdrop-blur-sm pb-2 z-10">
+        {/* Achievements - Full Width */}
+        <div ref={achievementCardRef} className="glass-card md:col-span-4 p-6 space-y-5">
+          <div className="flex items-center justify-between">
             <h3 className="font-semibold flex items-center gap-2">
               <Award className="h-5 w-5 text-primary" /> Achievements
             </h3>
-            <Badge variant="outline">{stats.unlockedAchievements.length} / {ACHIEVEMENTS.length}</Badge>
+            <Badge variant="outline" className="text-xs">{stats.unlockedAchievements.length} / {ACHIEVEMENTS.length}</Badge>
           </div>
 
-          <div className="grid grid-cols-3 gap-3">
+          {/* Unlocked achievements - horizontal scroll */}
+          <div className="flex gap-3 overflow-x-auto pb-2 scrollbar-hide">
             {unlockedAchievementDetails.map((achievement) => (
               <button
                 key={achievement!.key}
                 onClick={() => handleShareAchievement(achievement!)}
                 disabled={isSharing}
-                className="flex flex-col items-center p-3 rounded-xl bg-gradient-to-br from-primary/10 to-transparent border border-primary/10 hover:border-primary/30 transition-all hover:scale-105 active:scale-95 cursor-pointer"
+                className="flex-shrink-0 flex flex-col items-center p-4 w-24 rounded-xl bg-gradient-to-br from-primary/10 to-transparent border border-primary/20 hover:border-primary/40 transition-all hover:scale-105 active:scale-95 cursor-pointer"
               >
                 <div className="text-3xl mb-2 filter drop-shadow-sm">{achievement!.icon}</div>
-                <div className="text-xs font-bold text-center line-clamp-1">{achievement!.name}</div>
+                <div className="text-xs font-medium text-center leading-tight">{achievement!.name}</div>
               </button>
             ))}
-            {Array.from({ length: Math.max(0, 6 - unlockedAchievementDetails.length) }).map((_, i) => (
-              <div key={i} className="flex flex-col items-center justify-center p-3 rounded-xl bg-muted/20 border border-dashed border-muted">
-                <div className="text-2xl opacity-20 grayscale">🏆</div>
+            {unlockedAchievementDetails.length === 0 && (
+              <div className="flex items-center gap-3 text-muted-foreground py-4">
+                <span className="text-2xl opacity-40">🏆</span>
+                <span className="text-sm">Complete tasks to unlock achievements!</span>
               </div>
-            ))}
+            )}
           </div>
 
-          {listLockedAchievements(lockedAchievements, stats)}
+          {/* Up Next - compact inline */}
+          {lockedAchievements.length > 0 && (
+            <div className="pt-4 border-t border-border/30">
+              <p className="text-xs font-medium text-muted-foreground mb-3 uppercase tracking-wider">Up Next</p>
+              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3">
+                {lockedAchievements.slice(0, 3).map((achievement) => {
+                  const progressData = getAchievementProgress(achievement, {
+                    currentStreak: stats.currentStreak,
+                    bestStreak: stats.bestStreak,
+                    totalCompletions: stats.totalCompletions,
+                    totalPerfectDays: stats.totalPerfectDays,
+                    amCompletions: stats.amCompletions,
+                    noonCompletions: stats.noonCompletions,
+                    pmCompletions: stats.pmCompletions,
+                    level: stats.level,
+                  });
+                  return (
+                    <div key={achievement.key} className="flex items-center gap-3 p-3 rounded-lg bg-muted/20 hover:bg-muted/30 transition-colors">
+                      <div className="text-xl grayscale opacity-50">{achievement.icon}</div>
+                      <div className="flex-1 min-w-0">
+                        <div className="flex justify-between items-center gap-2">
+                          <span className="text-sm font-medium truncate">{achievement.name}</span>
+                          <span className="text-xs text-muted-foreground whitespace-nowrap">{progressData.remaining} left</span>
+                        </div>
+                        <Progress value={progressData.progress} className="h-1.5 mt-1.5" />
+                      </div>
+                    </div>
+                  );
+                })}
+              </div>
+            </div>
+          )}
         </div>
 
-        {/* Routine Detail List - Spans 2 */}
-        <div className="glass-card md:col-span-2 p-6 space-y-4 max-h-[400px] overflow-y-auto custom-scrollbar">
-          <h3 className="font-semibold sticky top-0 bg-background/80 backdrop-blur-sm pb-2 z-10">Routine Performance</h3>
-          <div className="space-y-3">
+        {/* Routine Performance - Full Width */}
+        <div className="glass-card md:col-span-4 p-6 space-y-4">
+          <h3 className="font-semibold">Routine Performance</h3>
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
             {routineStats.map(routine => (
               <div
                 key={routine.routineId}
-                className="group relative flex items-center gap-4 p-3 rounded-xl hover:bg-muted/40 transition-colors border border-transparent hover:border-border/50"
+                className="group flex items-center gap-4 p-4 rounded-xl bg-muted/20 hover:bg-muted/30 transition-colors border border-transparent hover:border-border/30"
               >
-                <div className="text-2xl p-2 bg-muted/30 rounded-lg group-hover:scale-110 transition-transform">
+                <div className="text-3xl p-2 bg-background/50 rounded-xl group-hover:scale-110 transition-transform">
                   {routine.routineIcon}
                 </div>
                 <div className="flex-1 min-w-0">
-                  <div className="flex justify-between mb-1">
+                  <div className="flex items-center justify-between gap-2 mb-2">
                     <span className="font-semibold truncate">{routine.routineName}</span>
-                    <span className="font-bold text-primary">{routine.completionRate}%</span>
+                    <span className="font-bold text-primary text-lg">{routine.completionRate}%</span>
                   </div>
-                  <Progress value={routine.completionRate} className="h-1.5" />
-                  <div className="flex justify-between mt-1.5 text-xs text-muted-foreground">
-                    <span className="flex items-center gap-1">🔥 {routine.currentStreak} day streak</span>
+                  <Progress value={routine.completionRate} className="h-2" />
+                  <div className="flex justify-between items-center mt-2">
+                    <span className="text-xs text-muted-foreground flex items-center gap-1">
+                      🔥 {routine.currentStreak} day streak
+                    </span>
                     <Button
                       variant="ghost"
                       size="icon"
-                      className="h-6 w-6 -mr-2 text-muted-foreground hover:text-foreground"
+                      className="h-6 w-6 text-muted-foreground hover:text-foreground opacity-0 group-hover:opacity-100 transition-opacity"
                       onClick={() => handleShareRoutine(routine)}
                     >
                       <Share2 className="h-3 w-3" />
@@ -601,44 +630,6 @@ export default function DashboardPage() {
           <Share2 className="w-4 h-4" />
           {isSharing ? "Generating..." : "Share Dashboard Overview"}
         </Button>
-      </div>
-    </div>
-  );
-}
-
-// Helper component for locked achievements needed to be inside or outside. 
-function listLockedAchievements(locked: Achievement[], stats: GamificationStats) {
-  if (locked.length === 0) return null;
-
-  return (
-    <div className="pt-4 border-t border-border/50">
-      <p className="text-xs font-semibold text-muted-foreground mb-3 uppercase tracking-wider">Up Next</p>
-      <div className="space-y-3">
-        {locked.map((achievement) => {
-          const progressData = getAchievementProgress(achievement, {
-            currentStreak: stats.currentStreak,
-            bestStreak: stats.bestStreak,
-            totalCompletions: stats.totalCompletions,
-            totalPerfectDays: stats.totalPerfectDays,
-            amCompletions: stats.amCompletions,
-            noonCompletions: stats.noonCompletions,
-            pmCompletions: stats.pmCompletions,
-            level: stats.level,
-          });
-
-          return (
-            <div key={achievement.key} className="flex items-center gap-3 p-2 rounded-lg hover:bg-muted/30 transition-colors">
-              <div className="text-2xl grayscale opacity-40">{achievement.icon}</div>
-              <div className="flex-1 space-y-1.5">
-                <div className="flex justify-between text-xs">
-                  <span className="font-medium text-muted-foreground">{achievement.name}</span>
-                  <span className="text-muted-foreground">{progressData.remaining} left</span>
-                </div>
-                <Progress value={progressData.progress} className="h-1.5 opacity-70" />
-              </div>
-            </div>
-          );
-        })}
       </div>
     </div>
   );

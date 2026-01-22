@@ -52,9 +52,12 @@ function saveToStorage<T>(key: string, data: T): void {
   localStorage.setItem(key, JSON.stringify(data));
 }
 
-// Format date as YYYY-MM-DD
+// Format date as YYYY-MM-DD (using local timezone)
 function formatDate(date: Date): string {
-  return date.toISOString().split("T")[0];
+  const year = date.getFullYear();
+  const month = String(date.getMonth() + 1).padStart(2, '0');
+  const day = String(date.getDate()).padStart(2, '0');
+  return `${year}-${month}-${day}`;
 }
 
 // API helper
@@ -286,6 +289,8 @@ export const routinesApi = {
     const index = routines.findIndex((r) => r.id === id);
     if (index === -1) throw new Error("Routine not found");
 
+    const oldRoutine = routines[index];
+
     // Update server first
     const result = await api(`/api/routines/${id}`, {
       method: "PUT",
@@ -294,6 +299,21 @@ export const routinesApi = {
 
     if (!result) {
       throw new Error("Failed to update routine. Please try again.");
+    }
+    
+    // If time categories changed, clean up completions for removed categories
+    if (data.timeCategories && oldRoutine.timeCategories) {
+      const removedCategories = oldRoutine.timeCategories.filter(
+        cat => !data.timeCategories!.includes(cat)
+      );
+      
+      if (removedCategories.length > 0) {
+        const completions = getFromStorage<Completion[]>(KEYS.completions, []);
+        const filteredCompletions = completions.filter(
+          c => !(c.routineId === id && removedCategories.includes(c.timeCategory as TimeCategory))
+        );
+        saveToStorage(KEYS.completions, filteredCompletions);
+      }
     }
     
     // Then update localStorage
