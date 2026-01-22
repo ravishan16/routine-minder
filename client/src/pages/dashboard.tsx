@@ -356,34 +356,39 @@ export default function DashboardPage() {
 
         {/* Unlocked achievements */}
         {unlockedAchievementDetails.length > 0 && (
-          <div className="flex gap-2 overflow-x-auto pb-1 scrollbar-hide">
-            {unlockedAchievementDetails.slice(-6).map((achievement) => (
-              <div
-                key={achievement.key}
-                className="flex-shrink-0 flex flex-col items-center p-3 w-20 rounded-lg bg-primary/5 border border-primary/10"
-              >
-                <div className="text-2xl mb-1">{achievement.icon}</div>
-                <div className="text-[10px] font-medium text-center leading-tight line-clamp-2">{achievement.name}</div>
-              </div>
-            ))}
+          <div className="relative">
+            <div className="flex gap-3 overflow-x-auto pb-1 scrollbar-hide pr-6">
+              {unlockedAchievementDetails.slice(-6).map((achievement) => (
+                <div
+                  key={achievement.key}
+                  className="flex-shrink-0 flex flex-col items-center justify-center p-3 w-24 h-28 rounded-xl bg-primary/5 border border-primary/10 shadow-sm"
+                  style={{ minWidth: '6rem', minHeight: '7rem' }}
+                >
+                  <div className="text-3xl mb-2 flex items-center justify-center" aria-label={achievement.name}>{achievement.icon}</div>
+                  <div className="text-xs font-medium text-center leading-tight line-clamp-2 w-full break-words" style={{wordBreak:'break-word'}}>{achievement.name}</div>
+                </div>
+              ))}
+            </div>
+            {/* Fade for scroll */}
+            <div className="pointer-events-none absolute right-0 top-0 h-full w-8 bg-gradient-to-l from-background/90 to-transparent" />
           </div>
         )}
 
         {/* Next to unlock */}
         {lockedAchievements.length > 0 && (
-          <div className="space-y-2 pt-3 border-t border-border/30">
-            <p className="text-[10px] font-medium text-muted-foreground uppercase tracking-wider">Next to unlock</p>
+          <div className="space-y-3 pt-4 border-t border-border/30">
+            <p className="text-xs font-semibold text-muted-foreground uppercase tracking-wider mb-1">Next to unlock</p>
             {lockedAchievements.map((achievement) => {
               const progressData = getAchievementProgress(achievement, stats);
               return (
-                <div key={achievement.key} className="flex items-center gap-3">
-                  <div className="text-lg grayscale opacity-40">{achievement.icon}</div>
+                <div key={achievement.key} className="flex items-center gap-4">
+                  <div className="text-2xl grayscale opacity-40 min-w-[2.5rem] flex items-center justify-center">{achievement.icon}</div>
                   <div className="flex-1 min-w-0">
                     <div className="flex items-center justify-between gap-2 mb-1">
-                      <span className="text-xs font-medium truncate">{achievement.name}</span>
-                      <span className="text-[10px] text-muted-foreground whitespace-nowrap">{progressData.remaining} left</span>
+                      <span className="text-sm font-semibold truncate">{achievement.name}</span>
+                      <span className="text-xs text-muted-foreground whitespace-nowrap font-medium">{progressData.remaining} left</span>
                     </div>
-                    <Progress value={progressData.progress} className="h-1" />
+                    <Progress value={progressData.progress} className="h-2" />
                   </div>
                 </div>
               );
