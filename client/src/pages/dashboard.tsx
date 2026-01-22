@@ -442,7 +442,12 @@ export default function DashboardPage() {
                   <div className="text-4xl flex-shrink-0 mr-2">{routine.routineIcon}</div>
                   <div className="flex-1 min-w-0">
                     <div className="flex items-center justify-between gap-2 w-full">
-                      <span className="font-semibold text-lg truncate block" style={{lineHeight:1.2, maxWidth:'70%'}}>{routine.routineName}</span>
+                      <span
+                        className="font-semibold text-lg break-words whitespace-normal block"
+                        style={{ lineHeight: 1.2 }}
+                      >
+                        {routine.routineName}
+                      </span>
                       <span className="font-bold text-xl text-primary whitespace-nowrap">{routine.completionRate}%</span>
                     </div>
                     <Progress value={routine.completionRate} className="h-2 mt-2 w-full" />
