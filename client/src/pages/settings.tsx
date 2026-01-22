@@ -1,6 +1,6 @@
 import { useState } from "react";
 import { useQuery, useMutation } from "@tanstack/react-query";
-import { Bell, Sun, Moon, Download, Upload, Trash2, User, LogOut, Smartphone, Share2, AlertTriangle } from "lucide-react";
+import { Bell, Sun, Moon, Download, Upload, Trash2, User, LogOut, Smartphone, Share2, AlertTriangle, CheckCircle2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { Switch } from "@/components/ui/switch";
@@ -24,6 +24,8 @@ import { settingsApi, getGoogleUser, signInWithGoogle, signOutGoogle, deleteAcco
 import { exportData, importData, type ExportFormat, type ExportRange } from "@/lib/export";
 import { requestNotificationPermission, subscribeToPushNotifications, isPushSupported } from "@/lib/notifications";
 import type { Settings } from "@/lib/schema";
+
+import { Link } from "wouter";
 
 export default function SettingsPage() {
   const { theme, toggleTheme } = useTheme();
@@ -59,7 +61,7 @@ export default function SettingsPage() {
         toast({ title: "Notification permission denied", variant: "destructive" });
         return;
       }
-      
+
       const subscribed = await subscribeToPushNotifications();
       if (subscribed) {
         updateMutation.mutate({ notificationsEnabled: true });
@@ -92,16 +94,16 @@ export default function SettingsPage() {
     setIsImporting(true);
     try {
       const result = await importData(file);
-      toast({ 
-        title: "Import successful", 
-        description: `Imported ${result.routines} routines` 
+      toast({
+        title: "Import successful",
+        description: `Imported ${result.routines} routines`
       });
       queryClient.invalidateQueries({ queryKey: ["routines"] });
     } catch (err) {
-      toast({ 
-        title: "Import failed", 
+      toast({
+        title: "Import failed",
         description: err instanceof Error ? err.message : "Unknown error",
-        variant: "destructive" 
+        variant: "destructive"
       });
     } finally {
       setIsImporting(false);
@@ -115,10 +117,10 @@ export default function SettingsPage() {
       await refetchGoogleUser();
       toast({ title: "Signed in successfully" });
     } catch (e) {
-      toast({ 
-        title: "Sign-in failed", 
+      toast({
+        title: "Sign-in failed",
         description: e instanceof Error ? e.message : "Unknown error",
-        variant: "destructive" 
+        variant: "destructive"
       });
     }
   };
@@ -149,7 +151,7 @@ export default function SettingsPage() {
         window.location.reload();
       } else {
         // Still clear local data even if server delete fails
-        toast({ 
+        toast({
           title: "Account data cleared",
           description: "Local data cleared. Server data may persist."
         });
@@ -189,105 +191,127 @@ export default function SettingsPage() {
         </Button>
       </div>
 
-      {/* Account - Google Sign In */}
-      <Card className="p-4 space-y-4">
-        <h2 className="font-semibold flex items-center gap-2">
-          <User className="h-4 w-4" />
-          Account & Sync
-        </h2>
-        <Separator />
+      {/* Account - Premium ID Card Style */}
+      <div className="glass-card p-6 space-y-6 relative overflow-hidden group">
+        <div className="absolute top-0 left-0 right-0 h-1 bg-gradient-to-r from-primary via-accent to-purple-500"></div>
+
+        <div className="flex items-center justify-between">
+          <div className="flex items-center gap-2">
+            <img src="/icons/icon.svg" alt="App Icon" className="h-6 w-6 rounded-md" />
+            <h2 className="font-bold text-lg">Account & Sync</h2>
+          </div>
+          {googleUser && (
+            <div className="px-3 py-1 rounded-full bg-primary/10 border border-primary/20 text-xs font-medium text-primary flex items-center gap-1.5">
+              <span className="relative flex h-2 w-2">
+                <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-primary opacity-75"></span>
+                <span className="relative inline-flex rounded-full h-2 w-2 bg-primary"></span>
+              </span>
+              Sync Active
+            </div>
+          )}
+        </div>
+
         {googleUser ? (
-          <>
-            <div className="flex items-center justify-between">
-              <div className="flex items-center gap-3">
-                {googleUser.photoURL && (
-                  <img 
-                    src={googleUser.photoURL} 
-                    alt="" 
-                    className="w-10 h-10 rounded-full"
+          <div className="space-y-6">
+            <div className="flex items-center justify-between bg-muted/30 p-4 rounded-xl border border-border/50 backdrop-blur-sm">
+              <div className="flex items-center gap-4">
+                {googleUser.photoURL ? (
+                  <img
+                    src={googleUser.photoURL}
+                    alt=""
+                    className="w-16 h-16 rounded-full ring-4 ring-background border border-border shadow-lg"
                   />
+                ) : (
+                  <div className="w-16 h-16 rounded-full bg-primary/10 flex items-center justify-center text-primary text-xl font-bold ring-4 ring-background border border-border mt-1">
+                    {googleUser.displayName?.charAt(0)}
+                  </div>
                 )}
                 <div>
-                  <p className="text-sm font-medium">{googleUser.displayName}</p>
-                  <p className="text-xs text-muted-foreground">{googleUser.email}</p>
+                  <p className="font-bold text-lg leading-tight">{googleUser.displayName}</p>
+                  <p className="text-sm text-muted-foreground font-medium">{googleUser.email}</p>
                 </div>
               </div>
-              <Button variant="ghost" size="sm" onClick={handleGoogleSignOut}>
-                <LogOut className="h-4 w-4 mr-2" />
-                Sign Out
+              <Button variant="outline" size="sm" onClick={handleGoogleSignOut} className="hover:bg-destructive/10 hover:text-destructive hover:border-destructive/30">
+                <LogOut className="h-4 w-4" />
               </Button>
             </div>
-            <div className="bg-green-500/10 border border-green-500/20 rounded-lg p-3 flex items-start gap-2">
-              <div className="w-5 h-5 rounded-full bg-green-500 flex items-center justify-center flex-shrink-0 mt-0.5">
-                <svg className="w-3 h-3 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={3} d="M5 13l4 4L19 7" />
-                </svg>
+
+            <div className="text-sm text-muted-foreground bg-accent/5 p-3 rounded-lg border border-accent/10 flex gap-2.5">
+              <div className="mt-0.5 min-w-[1.25rem]">
+                <CheckCircle2 className="w-5 h-5 text-accent" />
               </div>
-              <div>
-                <p className="text-sm font-medium text-green-700 dark:text-green-400">Sync Enabled</p>
-                <p className="text-xs text-muted-foreground">Your routines sync across all devices signed in with this Google account.</p>
-              </div>
+              <p>Your routines are securely synced across all your devices. Changes made here will reflect everywhere instantly.</p>
             </div>
-          </>
+          </div>
         ) : (
-          <>
-            <p className="text-sm text-muted-foreground">
-              Sign in with Google to sync your routines across multiple devices. Your data is backed up to the cloud automatically.
-            </p>
-            <Button onClick={handleGoogleSignIn} className="w-full" size="lg">
+          <div className="text-center py-4 space-y-6">
+            <div className="space-y-2">
+              <div className="w-16 h-16 mx-auto rounded-xl bg-muted/50 flex items-center justify-center mb-4 p-2">
+                <img src="/icons/icon.svg" alt="App Icon" className="w-full h-full object-contain" />
+              </div>
+              <p className="font-medium text-foreground">Sign in to sync your habits</p>
+              <p className="text-sm text-muted-foreground max-w-xs mx-auto">
+                Securely backup your data and access your habits from any device.
+              </p>
+            </div>
+
+            <Button onClick={handleGoogleSignIn} className="w-full h-12 text-base shadow-lg shadow-primary/20" size="lg">
               <svg className="h-5 w-5 mr-2" viewBox="0 0 24 24">
-                <path fill="currentColor" d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z"/>
-                <path fill="currentColor" d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z"/>
-                <path fill="currentColor" d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.07H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.93l2.85-2.22.81-.62z"/>
-                <path fill="currentColor" d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z"/>
+                <path fill="currentColor" d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z" />
+                <path fill="currentColor" d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z" />
+                <path fill="currentColor" d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.07H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.93l2.85-2.22.81-.62z" />
+                <path fill="currentColor" d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z" />
               </svg>
               Sign in with Google
             </Button>
             <p className="text-xs text-center text-muted-foreground">
-              Without sign-in, your data only exists on this device
+              We respect your privacy. No spam, ever.
             </p>
-          </>
+          </div>
         )}
-      </Card>
+      </div>
 
       {/* Appearance */}
-      <Card className="p-4 space-y-4">
-        <h2 className="font-semibold">Appearance</h2>
-        <div className="flex items-center justify-between">
+      {/* Appearance */}
+      <div className="glass-card p-4 space-y-4">
+        <h2 className="font-semibold px-1">Appearance</h2>
+        <div className="flex items-center justify-between p-3 rounded-lg bg-muted/40 hover:bg-muted/60 transition-colors">
           <div className="flex items-center gap-3">
-            {theme === "dark" ? <Moon className="h-5 w-5" /> : <Sun className="h-5 w-5" />}
+            <div className="p-2 rounded-md bg-background shadow-xs text-foreground">
+              {theme === "dark" ? <Moon className="h-4 w-4" /> : <Sun className="h-4 w-4" />}
+            </div>
             <span>Dark Mode</span>
           </div>
           <Switch checked={theme === "dark"} onCheckedChange={toggleTheme} />
         </div>
-      </Card>
+      </div>
 
       {/* Notifications */}
-      <Card className="p-4 space-y-4">
-        <h2 className="font-semibold flex items-center gap-2">
-          <Bell className="h-4 w-4" />
+      <div className="glass-card p-4 space-y-4">
+        <h2 className="font-semibold flex items-center gap-2 px-1">
+          <Bell className="h-4 w-4 text-primary" />
           Notifications
         </h2>
         {isPushSupported() ? (
-          <>
-            <p className="text-sm text-muted-foreground">
-              Get reminders to complete your routines.
-            </p>
+          <div className="p-4 rounded-lg bg-muted/40 space-y-4">
             <div className="flex items-center justify-between">
-              <span>Enable Reminders</span>
+              <div>
+                <p className="font-medium">Enable Reminders</p>
+                <p className="text-xs text-muted-foreground mt-0.5">Receive nudge notifications</p>
+              </div>
               <Switch
                 checked={settings?.notificationsEnabled || false}
                 onCheckedChange={handleNotificationToggle}
                 disabled={isLoading}
               />
             </div>
-          </>
+          </div>
         ) : (
-          <p className="text-sm text-muted-foreground">
+          <p className="text-sm text-muted-foreground px-1">
             Push notifications are not supported in this browser.
           </p>
         )}
-      </Card>
+      </div>
 
       {/* Export/Import */}
       <Card className="p-4 space-y-4">
@@ -328,9 +352,9 @@ export default function SettingsPage() {
           </div>
         </div>
         <div className="flex gap-2">
-          <Button 
-            onClick={handleExport} 
-            disabled={isExporting} 
+          <Button
+            onClick={handleExport}
+            disabled={isExporting}
             className="flex-1"
           >
             <Download className="h-4 w-4 mr-2" />
@@ -344,8 +368,8 @@ export default function SettingsPage() {
               className="hidden"
               disabled={isImporting}
             />
-            <Button 
-              variant="outline" 
+            <Button
+              variant="outline"
               disabled={isImporting}
               className="w-full"
               asChild
@@ -386,7 +410,7 @@ export default function SettingsPage() {
           Danger Zone
         </h2>
         <Separator />
-        
+
         {/* Clear Local Data */}
         <div className="space-y-2">
           <p className="text-sm font-medium">Clear Local Data</p>
@@ -398,9 +422,9 @@ export default function SettingsPage() {
             Clear Local Data
           </Button>
         </div>
-        
+
         <Separator />
-        
+
         {/* Delete Account */}
         <div className="space-y-2">
           <p className="text-sm font-medium">Delete Account</p>
@@ -448,60 +472,22 @@ export default function SettingsPage() {
         </div>
       </Card>
 
-      {/* About */}
-      <Card className="p-4 space-y-4">
-        <h2 className="font-semibold">About</h2>
-        <p className="text-sm text-muted-foreground">
-          Routine Minder v2.2.0
-        </p>
-        <p className="text-xs text-muted-foreground">
-          A simple habit tracker that works offline. Build better habits, track your progress, and celebrate your achievements.
-        </p>
-        
-        <div className="flex flex-wrap gap-3 text-sm">
-          <a 
-            href="/" 
-            target="_blank" 
-            rel="noopener noreferrer"
-            className="text-primary hover:underline"
-          >
-            Home
-          </a>
-          <span className="text-muted-foreground">•</span>
-          <a 
-            href="https://github.com/ravishan16/routine-minder" 
-            target="_blank" 
-            rel="noopener noreferrer"
-            className="text-primary hover:underline"
-          >
-            GitHub
-          </a>
-        </div>
-      </Card>
+
 
       {/* Legal */}
-      <Card className="p-4 space-y-3">
-        <h2 className="font-semibold text-sm">Legal</h2>
-        <div className="space-y-2 text-xs text-muted-foreground">
-          <div className="space-y-1">
-            <p className="font-medium text-foreground">Privacy Policy</p>
-            <p>
-              Your data is stored locally on your device and optionally synced to our secure cloud servers when you sign in with Google. We don't sell or share your personal information with third parties. Data is encrypted in transit.
-            </p>
-          </div>
-          <div className="space-y-1">
-            <p className="font-medium text-foreground">Terms of Service</p>
-            <p>
-              By using Routine Minder, you agree to use it responsibly. We provide this service as-is without warranties. You can delete your account and all data at any time from the Danger Zone above.
-            </p>
-          </div>
-          <div className="space-y-1">
-            <p className="font-medium text-foreground">Data Collection</p>
-            <p>
-              We collect only what's necessary: your Google profile info (if signed in) and your routine/completion data for sync. No analytics or tracking beyond basic Cloudflare metrics.
-            </p>
-          </div>
-        </div>
+      <Card className="overflow-hidden divide-y">
+        <Link href="/privacy" className="flex items-center justify-between p-4 hover:bg-muted/50 transition-colors">
+          <span className="font-medium text-sm">Privacy Policy</span>
+          <div className="text-muted-foreground">→</div>
+        </Link>
+        <Link href="/terms" className="flex items-center justify-between p-4 hover:bg-muted/50 transition-colors">
+          <span className="font-medium text-sm">Terms of Service</span>
+          <div className="text-muted-foreground">→</div>
+        </Link>
+        <Link href="/about" className="flex items-center justify-between p-4 hover:bg-muted/50 transition-colors">
+          <span className="font-medium text-sm">About</span>
+          <div className="text-muted-foreground">→</div>
+        </Link>
       </Card>
     </div>
   );

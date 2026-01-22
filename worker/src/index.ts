@@ -22,18 +22,18 @@ app.use('*', cors({
 // API Key Protection Middleware (skip for health check)
 app.use('/api/*', async (c, next) => {
   const apiSecret = c.env.API_SECRET;
-  
+
   // Skip if no secret configured (development)
   if (!apiSecret) {
     await next();
     return;
   }
-  
+
   const apiKey = c.req.header('X-API-Key');
   if (apiKey !== apiSecret) {
     return c.json({ error: 'Unauthorized - Invalid API key' }, 401);
   }
-  
+
   await next();
 });
 
@@ -45,7 +45,7 @@ app.get('/', (c) => c.json({ status: 'ok', service: 'routine-minder-api' }));
 // Get or create device user
 app.post('/api/auth/device', async (c) => {
   const { deviceId } = await c.req.json();
-  
+
   if (!deviceId) {
     return c.json({ error: 'deviceId required' }, 400);
   }
@@ -73,7 +73,7 @@ app.post('/api/auth/device', async (c) => {
 // If new google_id, create user or link to existing device user
 app.post('/api/auth/google', async (c) => {
   const { idToken, deviceId } = await c.req.json();
-  
+
   if (!idToken) {
     return c.json({ error: 'idToken required' }, 400);
   }
@@ -107,9 +107,9 @@ app.post('/api/auth/google', async (c) => {
         'UPDATE users SET email = ?, display_name = ?, photo_url = ? WHERE id = ?'
       ).bind(email, displayName, photoUrl, existingUser.id).run();
 
-      return c.json({ 
-        userId: existingUser.id, 
-        email, 
+      return c.json({
+        userId: existingUser.id,
+        email,
         displayName,
         photoUrl,
         isNewUser: false,
@@ -119,7 +119,7 @@ app.post('/api/auth/google', async (c) => {
 
     // NEW Google user - check if device already has an anonymous user
     let userId: string;
-    
+
     if (deviceId) {
       const deviceUser = await c.env.DB.prepare(
         'SELECT * FROM users WHERE device_id = ?'
@@ -130,7 +130,7 @@ app.post('/api/auth/google', async (c) => {
         await c.env.DB.prepare(
           'UPDATE users SET email = ?, google_id = ?, display_name = ?, photo_url = ? WHERE id = ?'
         ).bind(email, googleId, displayName, photoUrl, deviceUser.id).run();
-        
+
         userId = deviceUser.id as string;
       } else {
         // Create new user with Google info
@@ -147,9 +147,9 @@ app.post('/api/auth/google', async (c) => {
       ).bind(userId, `google_${googleId}`, email, googleId, displayName, photoUrl, new Date().toISOString()).run();
     }
 
-    return c.json({ 
-      userId, 
-      email, 
+    return c.json({
+      userId,
+      email,
       displayName,
       photoUrl,
       isNewUser: true,
@@ -438,7 +438,7 @@ app.get('/api/dashboard', async (c) => {
 app.delete('/api/users/:userId', async (c) => {
   const requestUserId = c.req.header('X-User-Id');
   const targetUserId = c.req.param('userId');
-  
+
   // Users can only delete their own account
   if (!requestUserId || requestUserId !== targetUserId) {
     return c.json({ error: 'Unauthorized' }, 401);
