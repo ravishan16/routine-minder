@@ -216,11 +216,23 @@ export function startBackgroundSync(): void {
 export const routinesApi = {
   getAll: async (): Promise<Routine[]> => {
     const routines = getFromStorage<Routine[]>(KEYS.routines, []);
-    // Deduplicate by ID (keep first occurrence)
-    const seen = new Set<string>();
-    return routines.filter(r => {
-      if (seen.has(r.id)) return false;
-      seen.add(r.id);
+    // Deduplicate by ID and by name (keep first occurrence, prefer active)
+    const seenIds = new Set<string>();
+    const seenNames = new Set<string>();
+    
+    // Sort to put active routines first
+    const sorted = [...routines].sort((a, b) => {
+      if (a.isActive && !b.isActive) return -1;
+      if (!a.isActive && b.isActive) return 1;
+      return 0;
+    });
+    
+    return sorted.filter(r => {
+      const lowerName = r.name.toLowerCase();
+      // Skip if we've seen this ID or this name already
+      if (seenIds.has(r.id) || seenNames.has(lowerName)) return false;
+      seenIds.add(r.id);
+      seenNames.add(lowerName);
       return true;
     });
   },

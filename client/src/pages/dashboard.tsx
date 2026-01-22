@@ -2,7 +2,7 @@ import { useState, useRef } from "react";
 import { useQuery } from "@tanstack/react-query";
 import {
   Flame, Sun, Moon, Share2, Zap, Award, Calendar, ChevronRight, Trophy,
-  TrendingUp, Target
+  TrendingUp, Target, Download
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Progress } from "@/components/ui/progress";
@@ -29,12 +29,51 @@ import {
 import type { Routine, Completion } from "@/lib/schema";
 import html2canvas from "html2canvas";
 
+// Streak milestones
+const MILESTONES = [7, 21, 30, 50, 100];
+
+function getNextMilestone(currentStreak: number): number {
+  for (const m of MILESTONES) {
+    if (currentStreak < m) return m;
+  }
+  return 365; // Annual milestone
+}
+
+function getMilestoneProgress(currentStreak: number): { milestone: number; progress: number; remaining: number } {
+  const milestone = getNextMilestone(currentStreak);
+  const prevMilestone = MILESTONES[MILESTONES.indexOf(milestone) - 1] || 0;
+  const progress = ((currentStreak - prevMilestone) / (milestone - prevMilestone)) * 100;
+  return {
+    milestone,
+    progress: Math.min(100, Math.max(0, progress)),
+    remaining: milestone - currentStreak
+  };
+}
+
+function getMilestoneLabel(milestone: number): string {
+  switch (milestone) {
+    case 7: return "Week Warrior";
+    case 21: return "Habit Former";
+    case 30: return "Monthly Master";
+    case 50: return "Unstoppable";
+    case 100: return "Century Club";
+    case 365: return "Annual Champion";
+    default: return `${milestone} Days`;
+  }
+}
+
 export default function DashboardPage() {
   const { theme, toggleTheme } = useTheme();
   const { toast } = useToast();
   const [period, setPeriod] = useState<Period>("7d");
-  const [isSharing, setIsSharing] = useState(false);
+  const [isSharing, setIsSharing] = useState<string | null>(null);
+  
+  // Refs for shareable sections
   const statsCardRef = useRef<HTMLDivElement>(null);
+  const activityRef = useRef<HTMLDivElement>(null);
+  const achievementsRef = useRef<HTMLDivElement>(null);
+  const timeOfDayRef = useRef<HTMLDivElement>(null);
+  const routinesRef = useRef<HTMLDivElement>(null);
 
   const { data: routines = [] } = useQuery<Routine[]>({
     queryKey: ["routines"],
@@ -53,12 +92,13 @@ export default function DashboardPage() {
     ? calculateGamificationStats(routines, completions, periodDays, savedBestStreak)
     : null;
 
-  // Deduplicate routines by ID
-  const uniqueRoutineIds = new Set<string>();
+  // Deduplicate routines by ID AND name (keep first occurrence)
+  const seenNames = new Set<string>();
   const routineStats: RoutineStats[] = routines
     .filter(r => {
-      if (!r.isActive || uniqueRoutineIds.has(r.id)) return false;
-      uniqueRoutineIds.add(r.id);
+      const lowerName = r.name.toLowerCase();
+      if (!r.isActive || seenNames.has(lowerName)) return false;
+      seenNames.add(lowerName);
       return true;
     })
     .map(r => calculateRoutineStats(r, completions, periodDays))
@@ -67,12 +107,21 @@ export default function DashboardPage() {
   // Share handlers
   const generateShareImage = async (element: HTMLElement): Promise<Blob | null> => {
     try {
-      const canvas = await html2canvas(element, {
+      // Clone the element to add padding for sharing
+      const clone = element.cloneNode(true) as HTMLElement;
+      clone.style.padding = "20px";
+      clone.style.borderRadius = "16px";
+      document.body.appendChild(clone);
+      
+      const canvas = await html2canvas(clone, {
         backgroundColor: theme === "dark" ? "#0f172a" : "#ffffff",
         scale: 2,
         logging: false,
         useCORS: true,
       });
+      
+      document.body.removeChild(clone);
+      
       return new Promise((resolve) => {
         canvas.toBlob((blob) => resolve(blob), "image/png", 1.0);
       });
@@ -102,16 +151,33 @@ export default function DashboardPage() {
     return true;
   };
 
-  const handleShareStats = async () => {
-    if (!statsCardRef.current || isSharing) return;
-    setIsSharing(true);
-    const blob = await generateShareImage(statsCardRef.current);
+  const handleShare = async (sectionName: string, ref: React.RefObject<HTMLDivElement | null>) => {
+    if (!ref.current || isSharing) return;
+    setIsSharing(sectionName);
+    const blob = await generateShareImage(ref.current);
     if (blob) {
       const dateStr = new Date().toISOString().split("T")[0];
-      await shareImage(blob, `routine-minder-stats-${dateStr}.png`);
+      await shareImage(blob, `routine-minder-${sectionName.toLowerCase()}-${dateStr}.png`);
     }
-    setIsSharing(false);
+    setIsSharing(null);
   };
+
+  // Share button component
+  const ShareButton = ({ section, sectionRef }: { section: string; sectionRef: React.RefObject<HTMLDivElement | null> }) => (
+    <Button
+      variant="ghost"
+      size="icon"
+      className="h-7 w-7 text-muted-foreground hover:text-foreground"
+      onClick={() => handleShare(section, sectionRef)}
+      disabled={isSharing !== null}
+    >
+      {isSharing === section ? (
+        <Download className="h-3.5 w-3.5 animate-bounce" />
+      ) : (
+        <Share2 className="h-3.5 w-3.5" />
+      )}
+    </Button>
+  );
 
   if (!stats) {
     return (
@@ -167,16 +233,16 @@ export default function DashboardPage() {
 
       {/* Stats Overview Card */}
       <div ref={statsCardRef} className="glass-card p-5 space-y-5">
-        {/* Level & XP */}
-        <div className="flex items-start justify-between">
-          <div>
+        <div className="flex items-center justify-between">
+          <div className="flex-1">
             <p className="text-xs font-medium text-muted-foreground uppercase tracking-wider">Level {stats.level.level}</p>
             <h2 className="text-2xl font-bold text-primary">{stats.level.name}</h2>
           </div>
-          <div className="text-right">
+          <div className="text-right mr-2">
             <div className="text-2xl font-bold">{stats.totalXP.toLocaleString()}</div>
             <p className="text-xs text-muted-foreground uppercase tracking-wider">XP</p>
           </div>
+          <ShareButton section="Stats" sectionRef={statsCardRef} />
         </div>
 
         {/* Progress bar */}
@@ -230,38 +296,49 @@ export default function DashboardPage() {
       </div>
 
       {/* Activity Heatmap */}
-      <div className="glass-card p-5">
+      <div ref={activityRef} className="glass-card p-5">
         <div className="flex items-center gap-2 mb-4">
           <Calendar className="h-4 w-4 text-primary" />
           <h3 className="font-semibold text-sm">Activity</h3>
-          <div className="ml-auto flex items-center gap-1.5 text-[10px] text-muted-foreground">
-            <span>Less</span>
-            <div className="flex gap-0.5">
-              <div className="w-2.5 h-2.5 rounded-sm bg-muted/40" />
-              <div className="w-2.5 h-2.5 rounded-sm bg-emerald-400/40" />
-              <div className="w-2.5 h-2.5 rounded-sm bg-emerald-500/60" />
-              <div className="w-2.5 h-2.5 rounded-sm bg-emerald-500/80" />
-              <div className="w-2.5 h-2.5 rounded-sm bg-emerald-500" />
+          <div className="ml-auto flex items-center gap-2">
+            <div className="flex items-center gap-1.5 text-[10px] text-muted-foreground">
+              <span>Less</span>
+              <div className="flex gap-0.5">
+                <div className="w-2.5 h-2.5 rounded-sm bg-muted/40" />
+                <div className="w-2.5 h-2.5 rounded-sm bg-emerald-400/40" />
+                <div className="w-2.5 h-2.5 rounded-sm bg-emerald-500/60" />
+                <div className="w-2.5 h-2.5 rounded-sm bg-emerald-500/80" />
+                <div className="w-2.5 h-2.5 rounded-sm bg-emerald-500" />
+              </div>
+              <span>More</span>
             </div>
-            <span>More</span>
+            <ShareButton section="Activity" sectionRef={activityRef} />
           </div>
         </div>
         <ActivityHeatmap completions={completions} days={365} />
+        <div className="mt-3 pt-3 border-t border-border/30 flex justify-between text-xs text-muted-foreground">
+          <span>{new Date(new Date().setFullYear(new Date().getFullYear() - 1)).toLocaleDateString('en-US', { month: 'short', year: 'numeric' })}</span>
+          <span>{completions.length} total completions</span>
+          <span>{new Date().toLocaleDateString('en-US', { month: 'short', year: 'numeric' })}</span>
+        </div>
       </div>
 
       {/* Achievements Section */}
-      <div className="glass-card p-5 space-y-4">
+      <div ref={achievementsRef} className="glass-card p-5 space-y-4">
         <div className="flex items-center justify-between">
           <div className="flex items-center gap-2">
             <Award className="h-4 w-4 text-primary" />
             <h3 className="font-semibold text-sm">Achievements</h3>
           </div>
-          <AchievementsModal unlockedAchievements={stats.unlockedAchievements} stats={stats}>
-            <Button variant="ghost" size="sm" className="h-7 text-xs gap-1">
-              {stats.unlockedAchievements.length}/{ACHIEVEMENTS.length}
-              <ChevronRight className="h-3 w-3" />
-            </Button>
-          </AchievementsModal>
+          <div className="flex items-center gap-1">
+            <AchievementsModal unlockedAchievements={stats.unlockedAchievements} stats={stats}>
+              <Button variant="ghost" size="sm" className="h-7 text-xs gap-1 px-2">
+                {stats.unlockedAchievements.length}/{ACHIEVEMENTS.length}
+                <ChevronRight className="h-3 w-3" />
+              </Button>
+            </AchievementsModal>
+            <ShareButton section="Achievements" sectionRef={achievementsRef} />
+          </div>
         </div>
 
         {/* Unlocked achievements */}
@@ -291,7 +368,7 @@ export default function DashboardPage() {
                   <div className="flex-1 min-w-0">
                     <div className="flex items-center justify-between gap-2 mb-1">
                       <span className="text-xs font-medium truncate">{achievement.name}</span>
-                      <span className="text-[10px] text-muted-foreground">{progressData.remaining} left</span>
+                      <span className="text-[10px] text-muted-foreground whitespace-nowrap">{progressData.remaining} left</span>
                     </div>
                     <Progress value={progressData.progress} className="h-1" />
                   </div>
@@ -303,10 +380,13 @@ export default function DashboardPage() {
       </div>
 
       {/* Time of Day Stats */}
-      <div className="glass-card p-5">
-        <div className="flex items-center gap-2 mb-4">
-          <Sun className="h-4 w-4 text-primary" />
-          <h3 className="font-semibold text-sm">Time of Day</h3>
+      <div ref={timeOfDayRef} className="glass-card p-5">
+        <div className="flex items-center justify-between mb-4">
+          <div className="flex items-center gap-2">
+            <Sun className="h-4 w-4 text-primary" />
+            <h3 className="font-semibold text-sm">Time of Day</h3>
+          </div>
+          <ShareButton section="TimeOfDay" sectionRef={timeOfDayRef} />
         </div>
         <div className="grid grid-cols-3 gap-3">
           <div className="text-center p-3 rounded-lg bg-orange-500/5 border border-orange-500/10">
@@ -324,48 +404,63 @@ export default function DashboardPage() {
         </div>
       </div>
 
-      {/* Routine Performance */}
-      <div className="glass-card p-5 space-y-4">
-        <h3 className="font-semibold text-sm">Routine Performance</h3>
-        <div className="space-y-3">
-          {routineStats.map((routine) => (
-            <div
-              key={routine.routineId}
-              className="flex items-center gap-3 p-3 rounded-lg bg-muted/20 hover:bg-muted/30 transition-colors"
-            >
-              <div className="text-2xl flex-shrink-0">{routine.routineIcon}</div>
-              <div className="flex-1 min-w-0">
-                <div className="flex items-center justify-between gap-2 mb-1.5">
-                  <span className="font-medium text-sm truncate">{routine.routineName}</span>
-                  <span className="font-bold text-primary">{routine.completionRate}%</span>
+      {/* Routine Performance with Milestones */}
+      <div ref={routinesRef} className="glass-card p-5 space-y-4">
+        <div className="flex items-center justify-between">
+          <h3 className="font-semibold text-sm">Routine Performance</h3>
+          <ShareButton section="Routines" sectionRef={routinesRef} />
+        </div>
+        <div className="space-y-4">
+          {routineStats.map((routine) => {
+            const milestone = getMilestoneProgress(routine.currentStreak);
+            return (
+              <div
+                key={routine.routineId}
+                className="p-4 rounded-xl bg-muted/20 hover:bg-muted/30 transition-colors space-y-3"
+              >
+                {/* Header row */}
+                <div className="flex items-center gap-3">
+                  <div className="text-3xl flex-shrink-0">{routine.routineIcon}</div>
+                  <div className="flex-1 min-w-0">
+                    <div className="flex items-center justify-between gap-2">
+                      <span className="font-semibold text-base truncate">{routine.routineName}</span>
+                      <span className="font-bold text-lg text-primary">{routine.completionRate}%</span>
+                    </div>
+                    <Progress value={routine.completionRate} className="h-2 mt-2" />
+                  </div>
                 </div>
-                <Progress value={routine.completionRate} className="h-1.5" />
-                <div className="flex items-center justify-between mt-1.5">
-                  <span className="text-[10px] text-muted-foreground">
-                    🔥 {routine.currentStreak} day streak
-                  </span>
-                  <span className="text-[10px] text-muted-foreground">
-                    {routine.totalCompletions} total
-                  </span>
+
+                {/* Streak milestone */}
+                <div className="pt-2 border-t border-border/30">
+                  <div className="flex items-center justify-between mb-1.5">
+                    <div className="flex items-center gap-2">
+                      <Flame className="h-3.5 w-3.5 text-orange-500" />
+                      <span className="text-xs font-medium">{routine.currentStreak} day streak</span>
+                    </div>
+                    <span className="text-xs text-muted-foreground">
+                      {milestone.remaining} to {getMilestoneLabel(milestone.milestone)}
+                    </span>
+                  </div>
+                  <div className="relative">
+                    <Progress value={milestone.progress} className="h-1.5" />
+                    <div className="flex justify-between mt-1 text-[9px] text-muted-foreground">
+                      <span>0</span>
+                      <span>{milestone.milestone} days</span>
+                    </div>
+                  </div>
+                </div>
+
+                {/* Footer stats */}
+                <div className="flex items-center justify-between text-xs text-muted-foreground pt-1">
+                  <span>📈 {routine.totalCompletions} completions</span>
+                  {routine.currentStreak >= 7 && (
+                    <span className="text-emerald-500 font-medium">🏆 Streak active!</span>
+                  )}
                 </div>
               </div>
-            </div>
-          ))}
+            );
+          })}
         </div>
-      </div>
-
-      {/* Share Button */}
-      <div className="flex justify-center pt-4">
-        <Button
-          variant="outline"
-          size="sm"
-          className="gap-2"
-          onClick={handleShareStats}
-          disabled={isSharing}
-        >
-          <Share2 className="w-4 h-4" />
-          {isSharing ? "Generating..." : "Share Stats"}
-        </Button>
       </div>
     </div>
   );

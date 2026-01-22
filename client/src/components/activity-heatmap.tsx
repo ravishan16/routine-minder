@@ -1,12 +1,20 @@
 import { useMemo } from "react";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
 import { cn } from "@/lib/utils";
-import { format, subDays, eachDayOfInterval, isSameDay, startOfWeek, endOfWeek } from "date-fns";
+import { format, subDays, eachDayOfInterval, startOfWeek, getMonth, getYear } from "date-fns";
 import type { Completion } from "@/lib/schema";
 
 interface ActivityHeatmapProps {
     completions: Completion[];
     days?: number;
+}
+
+// Format date as YYYY-MM-DD using local timezone
+function formatLocalDate(date: Date): string {
+    const year = date.getFullYear();
+    const month = String(date.getMonth() + 1).padStart(2, '0');
+    const day = String(date.getDate()).padStart(2, '0');
+    return `${year}-${month}-${day}`;
 }
 
 export function ActivityHeatmap({ completions, days = 365 }: ActivityHeatmapProps) {
@@ -22,7 +30,7 @@ export function ActivityHeatmap({ completions, days = 365 }: ActivityHeatmapProp
             end: today
         });
 
-        // Group completions by date
+        // Group completions by date using local date format
         const completionMap = new Map<string, number>();
         completions.forEach(c => {
             const dateKey = c.date;
@@ -30,7 +38,8 @@ export function ActivityHeatmap({ completions, days = 365 }: ActivityHeatmapProp
         });
 
         return dates.map(date => {
-            const dateKey = format(date, "yyyy-MM-dd");
+            // Use local date formatting instead of format() which may have timezone issues
+            const dateKey = formatLocalDate(date);
             const count = completionMap.get(dateKey) || 0;
 
             // Determine intensity level (0-4)
@@ -44,7 +53,9 @@ export function ActivityHeatmap({ completions, days = 365 }: ActivityHeatmapProp
                 date,
                 dateKey,
                 count,
-                level
+                level,
+                month: getMonth(date),
+                year: getYear(date)
             };
         });
     }, [completions, days]);
