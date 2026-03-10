@@ -1,6 +1,6 @@
 # Routine Minder
 
-![Routine Minder Banner](public/icons/icon-512.png)
+![Routine Minder Banner](public/icons/logo.svg)
 
 > **Consistency is key.** Routine Minder is a professional-grade Progressive Web App (PWA) designed to help you build and maintain daily habits through gamification and detailed analytics.
 
@@ -35,35 +35,27 @@
 - **PWA**: vite-plugin-pwa (Workbox)
 - **Backend (Optional Sync)**: Cloudflare Workers (Hono), Cloudflare D1 (SQLite)
 
-## 🛠️ Installation & Development
+## � Architecture
+
+For a deep dive into the system architecture, design system, deployment pipeline, and local development setup, see the **[Architecture & Design Guide](ARCHITECTURE.md)**.
+
+## 🛠️ Quick Start
 
 ### Prerequisites
 
-- Node.js 18+
+- Node.js 20+
 - npm 9+
 
-### Quick Start
+### Setup
 
-1.  **Clone the repository**
-    ```bash
-    git clone https://github.com/ravishan16/routine-minder.git
-    cd routine-minder
-    ```
+```bash
+git clone https://github.com/ravishan16/routine-minder.git
+cd routine-minder
+npm install
+npm run dev
+```
 
-2.  **Install dependencies**
-    ```bash
-    npm install
-    ```
-
-3.  **Start development server**
-    ```bash
-    npm run dev
-    ```
-
-4.  **Run tests**
-    ```bash
-    npm run test
-    ```
+See [ARCHITECTURE.md — Local Development](ARCHITECTURE.md#local-development) for full-stack setup with the Worker backend.
 
 ## 📦 Project Structure
 
@@ -87,15 +79,32 @@ routine-minder/
 
 ## 🧪 Testing
 
-We use **Vitest** for unit testing our gamification engine.
+### Unit Tests
 
 ```bash
-# Run all tests
-npm run test
-
-# Run with UI
-npm run test -- --ui
+npm run test          # watch mode
+npx vitest run        # single run (CI)
 ```
+
+### E2E Tests (Playwright)
+
+E2E tests run against a local full-stack environment (Vite + Cloudflare Worker).
+
+```bash
+# 1. Start the Worker (Terminal 1)
+cd worker && npm install
+npx wrangler d1 migrations apply routine-minder-db --local
+npx wrangler dev --config worker/wrangler.toml --port 8787
+
+# 2. Start the Frontend (Terminal 2, from project root)
+npm install && npm run dev
+
+# 3. Run E2E tests (Terminal 3, from project root)
+npm run test:e2e            # headless
+npm run test:e2e:headed     # visible browser
+```
+
+See [ARCHITECTURE.md — Testing](ARCHITECTURE.md#testing) for configuration details and guidelines.
 
 ## 🤝 Contributing
 
