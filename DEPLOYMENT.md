@@ -72,7 +72,7 @@ For Google Authentication to work, you need to configure client IDs in the Cloud
 -   `GOOGLE_CLIENT_SECRET` (Backend only)
 
 > [!TIP]
-> **Google Brand Verification**: For detailed instructions on setting up the OAuth Consent Screen, App Logo, and Privacy Policy to get "Verified" status, see [Google Verification Guide](file:///Users/ravi/.gemini/antigravity/brain/b76e9f31-ccea-4036-8a70-596ba0cd64a8/GOOGLE_VERIFICATION.md).
+> **Google Brand Verification**: For detailed instructions on setting up the OAuth Consent Screen, App Logo, and Privacy Policy to get "Verified" status, see the Google Cloud Console documentation on [OAuth consent screen](https://support.google.com/cloud/answer/10311615).
 
 ## CI/CD Service Token
 

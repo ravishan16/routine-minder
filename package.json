@@ -8,6 +8,8 @@
     "dev": "vite",
     "build": "tsc && vite build",
     "test": "vitest",
+    "test:e2e": "npx playwright test",
+    "test:e2e:headed": "npx playwright test --headed",
     "preview": "vitest preview",
     "check": "tsc"
   },
@@ -45,6 +47,7 @@
     "zod": "^3.24.2"
   },
   "devDependencies": {
+    "@playwright/test": "^1.58.2",
     "@tailwindcss/typography": "^0.5.15",
     "@testing-library/jest-dom": "^6.9.1",
     "@testing-library/react": "^16.3.2",

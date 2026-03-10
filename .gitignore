@@ -12,3 +12,8 @@ client_secret_337973952566-nfnjdjiq0e05s9d3tj45hl4hprssi46k.apps.googleuserconte
 # Wrangler local state
 .wrangler/
 worker/.wrangler/
+
+# Playwright
+test-results/
+playwright-report/
+.playwright-mcp/
