@@ -18,12 +18,14 @@ export default defineConfig({
       use: { browserName: "chromium" },
     },
   ],
+  reporter: process.env.CI ? [["html", { open: "never" }], ["list"]] : "list",
   webServer: [
     {
-      command: "cd worker && npx wrangler dev",
+      command:
+        "cd worker && npx wrangler d1 migrations apply routine-minder-db --local && npx wrangler dev",
       url: "http://localhost:8787",
       reuseExistingServer: !process.env.CI,
-      timeout: 30_000,
+      timeout: 60_000,
     },
     {
       command: "npm run dev",
