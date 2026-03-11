@@ -6,6 +6,9 @@ on:
   pull_request:
     branches: [main]
 
+permissions:
+  contents: read
+
 jobs:
   e2e:
     name: E2E Tests
@@ -40,6 +43,7 @@ jobs:
         run: npx playwright test
 
       - name: Upload HTML report
+        id: report
         uses: actions/upload-artifact@v4
         if: ${{ !cancelled() }}
         with:
@@ -48,12 +52,19 @@ jobs:
           retention-days: 30
 
       - name: Upload test screenshots
+        id: screenshots
         uses: actions/upload-artifact@v4
         if: ${{ !cancelled() }}
         with:
           name: test-screenshots
           path: test-results/
           retention-days: 30
+
+      - name: Upload report for GitHub Pages
+        if: ${{ !cancelled() && github.event_name == 'push' }}
+        uses: actions/upload-pages-artifact@v3
+        with:
+          path: playwright-report/
 
       - name: Add test results to job summary
         if: ${{ !cancelled() }}
@@ -75,6 +86,28 @@ jobs:
             fi
           done
           echo "" >> $GITHUB_STEP_SUMMARY
-          echo "📎 Download **test-screenshots** artifact for full-size screenshots of every test." >> $GITHUB_STEP_SUMMARY
+          PAGES_URL="https://${{ github.repository_owner }}.github.io/${GITHUB_REPOSITORY#*/}/"
+          echo "📊 **[View HTML Report with Screenshots](${PAGES_URL})** *(updated on each push to main)*" >> $GITHUB_STEP_SUMMARY
           echo "" >> $GITHUB_STEP_SUMMARY
-          echo "📊 Download **playwright-report** artifact, extract, and open \`index.html\` for the interactive report with inline screenshots and traces." >> $GITHUB_STEP_SUMMARY
+          echo "📎 [Download test screenshots](${{ steps.screenshots.outputs.artifact-url }})" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "📄 [Download HTML report](${{ steps.report.outputs.artifact-url }})" >> $GITHUB_STEP_SUMMARY
+
+  deploy-report:
+    name: Deploy Report to Pages
+    if: ${{ !cancelled() && github.event_name == 'push' }}
+    needs: e2e
+    permissions:
+      pages: write
+      id-token: write
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+    runs-on: ubuntu-latest
+    concurrency:
+      group: pages
+      cancel-in-progress: true
+    steps:
+      - name: Deploy to GitHub Pages
+        id: deployment
+        uses: actions/deploy-pages@v4
