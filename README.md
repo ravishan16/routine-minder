@@ -88,22 +88,20 @@ npx vitest run        # single run (CI)
 
 ### E2E Tests (Playwright)
 
-E2E tests run against a local full-stack environment (Vite + Cloudflare Worker).
+E2E tests run against a local full-stack environment (Vite + Cloudflare Worker).  
+Playwright's `webServer` config auto-starts both servers — no extra terminals needed.
 
 ```bash
-# 1. Start the Worker (Terminal 1)
-cd worker && npm install
-npx wrangler d1 migrations apply routine-minder-db --local
-npx wrangler dev --config worker/wrangler.toml --port 8787
+# One-time setup
+cd worker && npm install && cd ..
+npx playwright install --with-deps chromium
 
-# 2. Start the Frontend (Terminal 2, from project root)
-npm install && npm run dev
-
-# 3. Run E2E tests (Terminal 3, from project root)
+# Run tests (servers start automatically)
 npm run test:e2e            # headless
 npm run test:e2e:headed     # visible browser
 ```
 
+Screenshots are captured for every test and uploaded as artifacts in CI.  
 See [ARCHITECTURE.md — Testing](ARCHITECTURE.md#testing) for configuration details and guidelines.
 
 ## 🤝 Contributing

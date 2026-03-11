@@ -613,20 +613,25 @@ Configured in `playwright.config.ts`:
 
 #### Prerequisites
 
-Both local servers must be running before you execute the tests.
-See [Local Development — Full Stack Local](#full-stack-local) for setup steps.
+Install worker dependencies and Playwright browsers once:
 
 ```bash
-# Terminal 1 — Worker (from project root)
-npx wrangler dev --config worker/wrangler.toml --port 8787
+cd worker && npm install && cd ..
+npx playwright install --with-deps chromium
+```
 
-# Terminal 2 — Frontend (from project root)
-npm run dev
+Playwright's `webServer` config (in `playwright.config.ts`) auto-starts both the Worker and Vite dev server.  
+If you already have them running, Playwright reuses them (skipped in CI).
 
-# Terminal 3 — Run tests
+```bash
 npm run test:e2e            # headless (CI-friendly)
 npm run test:e2e:headed     # visible browser (debug / demo)
 ```
+
+#### CI Integration
+
+The `.github/workflows/playwright.yml` workflow runs E2E tests on every push/PR to `main`.  
+Screenshots are captured for every test and the HTML report + screenshots are uploaded as artifacts (retained 30 days).
 
 #### Test Suite (`e2e/app.spec.ts`)
 
