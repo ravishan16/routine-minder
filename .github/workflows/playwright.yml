@@ -54,3 +54,27 @@ jobs:
           name: test-screenshots
           path: test-results/
           retention-days: 30
+
+      - name: Add test results to job summary
+        if: ${{ !cancelled() }}
+        run: |
+          echo "## 🎭 Playwright E2E Test Results" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "| Status | Test |" >> $GITHUB_STEP_SUMMARY
+          echo "|--------|------|" >> $GITHUB_STEP_SUMMARY
+          for dir in test-results/*/; do
+            [ -d "$dir" ] || continue
+            test_name=$(basename "$dir" | sed 's/-chromium\(-retry[0-9]*\)\{0,1\}$//' | sed 's/-/ /g' | sed 's/^app //')
+            png=$(find "$dir" -name "*.png" -maxdepth 1 | head -1)
+            if [ -n "$png" ]; then
+              if echo "$png" | grep -q "failed"; then
+                echo "| ❌ | ${test_name} |" >> $GITHUB_STEP_SUMMARY
+              else
+                echo "| ✅ | ${test_name} |" >> $GITHUB_STEP_SUMMARY
+              fi
+            fi
+          done
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "📎 Download **test-screenshots** artifact for full-size screenshots of every test." >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "📊 Download **playwright-report** artifact, extract, and open \`index.html\` for the interactive report with inline screenshots and traces." >> $GITHUB_STEP_SUMMARY
