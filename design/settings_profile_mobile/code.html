@@ -1,0 +1,232 @@
+<!DOCTYPE html>
+
+<html class="light" lang="en"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@300;400;500;600;700;800&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<script id="tailwind-config">
+      tailwind.config = {
+        darkMode: "class",
+        theme: {
+          extend: {
+            colors: {
+              "tertiary": "#7f535c",
+              "outline": "#797b78",
+              "secondary-container": "#e7e0ef",
+              "primary-container": "#fc7127",
+              "tertiary-fixed-dim": "#edb5c0",
+              "tertiary-container": "#fcc3ce",
+              "on-tertiary-fixed-variant": "#6e454e",
+              "secondary-fixed": "#e7e0ef",
+              "primary-dim": "#903700",
+              "primary-fixed": "#fc7127",
+              "outline-variant": "#b0b3ae",
+              "on-secondary": "#fdf7ff",
+              "error-dim": "#791903",
+              "secondary-dim": "#56515d",
+              "surface-container-low": "#f4f4f0",
+              "on-tertiary-container": "#643c45",
+              "surface-dim": "#d9dbd6",
+              "surface-container-lowest": "#ffffff",
+              "on-primary-fixed-variant": "#481800",
+              "on-secondary-fixed-variant": "#5e5966",
+              "surface-container-highest": "#e1e3de",
+              "surface-bright": "#faf9f6",
+              "surface": "#faf9f6",
+              "on-primary-fixed": "#000000",
+              "on-error-container": "#6e1400",
+              "on-error": "#fff7f6",
+              "tertiary-dim": "#714750",
+              "secondary-fixed-dim": "#d9d2e1",
+              "surface-variant": "#e1e3de",
+              "on-primary": "#fff7f5",
+              "error": "#a73b21",
+              "on-tertiary-fixed": "#4e2932",
+              "surface-tint": "#a33f00",
+              "inverse-surface": "#0d0f0d",
+              "inverse-on-surface": "#9d9d9a",
+              "primary-fixed-dim": "#eb6519",
+              "background": "#faf9f6",
+              "on-secondary-container": "#54505c",
+              "on-secondary-fixed": "#413d49",
+              "surface-container": "#eeeeea",
+              "on-background": "#303330",
+              "on-surface-variant": "#5d605c",
+              "on-primary-container": "#381100",
+              "tertiary-fixed": "#fcc3ce",
+              "secondary": "#625d6a",
+              "surface-container-high": "#e7e9e4",
+              "error-container": "#fd795a",
+              "on-tertiary": "#fff7f7",
+              "primary": "#a33f00",
+              "on-surface": "#303330",
+              "inverse-primary": "#fc7127"
+            },
+            fontFamily: {
+              "headline": ["Plus Jakarta Sans"],
+              "body": ["Plus Jakarta Sans"],
+              "label": ["Plus Jakarta Sans"]
+            },
+            borderRadius: {"DEFAULT": "0.25rem", "lg": "0.5rem", "xl": "0.75rem", "full": "9999px"},
+          },
+        },
+      }
+    </script>
+<style>
+        body { font-family: 'Plus Jakarta Sans', sans-serif; }
+        .material-symbols-outlined {
+            font-variation-settings: 'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 24;
+        }
+    </style>
+<style>
+    body {
+      min-height: max(884px, 100dvh);
+    }
+  </style>
+  </head>
+<body class="bg-surface text-on-surface min-h-screen pb-24">
+<!-- TopAppBar -->
+<header class="bg-[#faf9f6] dark:bg-stone-950 sticky top-0 z-40">
+<div class="flex justify-between items-center w-full px-6 h-16">
+<button class="transition-all duration-200 active:scale-95 hover:bg-stone-200/50 dark:hover:bg-stone-800/50 p-2 rounded-full">
+<span class="material-symbols-outlined text-[#a33f00] dark:text-[#fc7127]" data-icon="arrow_back">arrow_back</span>
+</button>
+<h1 class="font-['Plus_Jakarta_Sans'] tracking-tight font-bold text-lg text-stone-900 dark:text-stone-100">Profile</h1>
+<button class="transition-all duration-200 active:scale-95 hover:bg-stone-200/50 dark:hover:bg-stone-800/50 p-2 rounded-full">
+<span class="material-symbols-outlined text-[#a33f00] dark:text-[#fc7127]" data-icon="settings">settings</span>
+</button>
+</div>
+</header>
+<main class="px-6 space-y-10 pt-4">
+<!-- User Profile Section -->
+<section class="flex flex-col items-center text-center space-y-4 pt-4">
+<div class="relative">
+<div class="w-24 h-24 rounded-full overflow-hidden border-4 border-surface-container-low shadow-sm">
+<img alt="Alex Rivers" class="w-full h-full object-cover" data-alt="Close-up portrait of a young man with a kind expression and gentle smile in soft, warm natural lighting" src="https://lh3.googleusercontent.com/aida-public/AB6AXuCFBMfaTumkUlsTpXODyUCIkfquHWyaWYgFpRKjoI5ginSrFKnUwHH3-1PkQkANEp6kOySqryXUHMrF682XhDrING9IVB2UK_NQiBL68ZLd7AnRlhcj3zj7_lnFRvI1gpw3xJOEnD8nD6Bz_x7nE9Lkq5Po_8ez0ysrb5Lx6vOeCM1BiVHi7X1ptviGntIgmceLTcyWvnyduKwJwVhaoktTV-HZI7cyhDiRfeiWuc6IJnpivjf98518nfOdy6S23r5K3pF5whMVBwU"/>
+</div>
+<button class="absolute bottom-0 right-0 bg-primary p-2 rounded-full text-on-primary shadow-lg active:scale-90 transition-transform">
+<span class="material-symbols-outlined text-sm" data-icon="edit">edit</span>
+</button>
+</div>
+<div>
+<h2 class="text-2xl font-bold tracking-tight text-on-surface">Alex Rivers</h2>
+<p class="text-secondary text-sm">alex.rivers@humblehearth.com</p>
+</div>
+</section>
+<!-- App Settings -->
+<section class="space-y-4">
+<h3 class="text-sm font-bold uppercase tracking-widest text-secondary opacity-70 ml-2">App Settings</h3>
+<div class="bg-surface-container-low rounded-3xl p-2 space-y-1">
+<!-- Dark Mode Toggle -->
+<div class="flex items-center justify-between p-4 bg-surface-container-lowest rounded-2xl">
+<div class="flex items-center space-x-4">
+<span class="material-symbols-outlined text-primary" data-icon="dark_mode">dark_mode</span>
+<span class="font-medium">Dark Mode</span>
+</div>
+<div class="w-12 h-6 bg-surface-container-highest rounded-full relative transition-colors cursor-pointer">
+<div class="absolute left-1 top-1 w-4 h-4 bg-white rounded-full transition-transform"></div>
+</div>
+</div>
+<!-- Notifications Toggle -->
+<div class="flex items-center justify-between p-4 bg-surface-container-lowest rounded-2xl">
+<div class="flex items-center space-x-4">
+<span class="material-symbols-outlined text-primary" data-icon="notifications">notifications</span>
+<span class="font-medium">Notifications</span>
+</div>
+<div class="w-12 h-6 bg-primary rounded-full relative cursor-pointer">
+<div class="absolute right-1 top-1 w-4 h-4 bg-white rounded-full"></div>
+</div>
+</div>
+<!-- Sound Effects Toggle -->
+<div class="flex items-center justify-between p-4 bg-surface-container-lowest rounded-2xl">
+<div class="flex items-center space-x-4">
+<span class="material-symbols-outlined text-primary" data-icon="volume_up">volume_up</span>
+<span class="font-medium">Sound Effects</span>
+</div>
+<div class="w-12 h-6 bg-primary rounded-full relative cursor-pointer">
+<div class="absolute right-1 top-1 w-4 h-4 bg-white rounded-full"></div>
+</div>
+</div>
+</div>
+</section>
+<!-- Preferences: Choice for Primary Goal -->
+<section class="space-y-4">
+<div class="flex justify-between items-end ml-2">
+<h3 class="text-sm font-bold uppercase tracking-widest text-secondary opacity-70">Primary Goal</h3>
+<span class="text-xs text-primary font-bold">Current: Mindfulness</span>
+</div>
+<div class="grid grid-cols-3 gap-3">
+<button class="flex flex-col items-center justify-center p-4 rounded-3xl bg-primary/10 border-2 border-primary transition-all">
+<span class="material-symbols-outlined text-primary mb-2" data-icon="self_improvement" style="font-variation-settings: 'FILL' 1;">self_improvement</span>
+<span class="text-xs font-bold text-primary">Mindful</span>
+</button>
+<button class="flex flex-col items-center justify-center p-4 rounded-3xl bg-surface-container-low hover:bg-surface-container-high transition-all">
+<span class="material-symbols-outlined text-secondary mb-2" data-icon="fitness_center">fitness_center</span>
+<span class="text-xs font-bold text-on-surface">Fitness</span>
+</button>
+<button class="flex flex-col items-center justify-center p-4 rounded-3xl bg-surface-container-low hover:bg-surface-container-high transition-all">
+<span class="material-symbols-outlined text-secondary mb-2" data-icon="bolt">bolt</span>
+<span class="text-xs font-bold text-on-surface">Focus</span>
+</button>
+</div>
+</section>
+<!-- Account Management -->
+<section class="space-y-4">
+<h3 class="text-sm font-bold uppercase tracking-widest text-secondary opacity-70 ml-2">Account</h3>
+<div class="bg-surface-container-low rounded-3xl overflow-hidden">
+<button class="w-full flex items-center justify-between p-5 bg-surface-container-lowest hover:bg-surface-container-low transition-colors active:scale-[0.98]">
+<div class="flex items-center space-x-4">
+<span class="material-symbols-outlined text-secondary" data-icon="lock_reset">lock_reset</span>
+<span class="font-medium">Change Password</span>
+</div>
+<span class="material-symbols-outlined text-outline-variant" data-icon="chevron_right">chevron_right</span>
+</button>
+<div class="h-[1px] bg-surface-container mx-5"></div>
+<button class="w-full flex items-center justify-between p-5 bg-surface-container-lowest hover:bg-error/5 transition-colors active:scale-[0.98]">
+<div class="flex items-center space-x-4">
+<span class="material-symbols-outlined text-error" data-icon="logout">logout</span>
+<span class="font-medium text-error">Log Out</span>
+</div>
+</button>
+</div>
+</section>
+<!-- Privacy & Terms -->
+<section class="space-y-4 pb-12">
+<h3 class="text-sm font-bold uppercase tracking-widest text-secondary opacity-70 ml-2">Legal</h3>
+<div class="flex flex-col space-y-2 px-2">
+<a class="text-secondary text-sm hover:text-primary transition-colors flex items-center space-x-2" href="#">
+<span class="material-symbols-outlined text-xs" data-icon="description">description</span>
+<span>Privacy Policy</span>
+</a>
+<a class="text-secondary text-sm hover:text-primary transition-colors flex items-center space-x-2" href="#">
+<span class="material-symbols-outlined text-xs" data-icon="gavel">gavel</span>
+<span>Terms of Service</span>
+</a>
+<p class="text-[10px] text-outline-variant pt-4">Humble Hearth Version 2.4.0 (Build 892)</p>
+</div>
+</section>
+</main>
+<!-- BottomNavBar -->
+<nav class="fixed bottom-0 left-0 w-full z-50 flex justify-around items-center px-4 pb-6 pt-3 bg-[#faf9f6]/80 dark:bg-stone-900/80 backdrop-blur-xl border-t border-stone-200/10 dark:border-stone-800/10 shadow-[0_-4px_24px_rgba(48,51,48,0.04)] rounded-t-3xl">
+<a class="flex flex-col items-center justify-center text-stone-500 dark:text-stone-400 px-4 py-1 transition-transform duration-300 ease-out active:scale-90 hover:text-stone-800 dark:hover:text-stone-200" href="#">
+<span class="material-symbols-outlined" data-icon="wb_sunny">wb_sunny</span>
+<span class="font-['Plus_Jakarta_Sans'] text-[11px] font-medium mt-1">Today</span>
+</a>
+<a class="flex flex-col items-center justify-center text-stone-500 dark:text-stone-400 px-4 py-1 transition-transform duration-300 ease-out active:scale-90 hover:text-stone-800 dark:hover:text-stone-200" href="#">
+<span class="material-symbols-outlined" data-icon="auto_stories">auto_stories</span>
+<span class="font-['Plus_Jakarta_Sans'] text-[11px] font-medium mt-1">Journal</span>
+</a>
+<a class="flex flex-col items-center justify-center text-stone-500 dark:text-stone-400 px-4 py-1 transition-transform duration-300 ease-out active:scale-90 hover:text-stone-800 dark:hover:text-stone-200" href="#">
+<span class="material-symbols-outlined" data-icon="analytics">analytics</span>
+<span class="font-['Plus_Jakarta_Sans'] text-[11px] font-medium mt-1">Insights</span>
+</a>
+<!-- Active Tab: Profile -->
+<a class="flex flex-col items-center justify-center text-[#a33f00] dark:text-[#fc7127] bg-[#a33f00]/5 rounded-xl px-4 py-1 transition-transform duration-300 ease-out active:scale-90" href="#">
+<span class="material-symbols-outlined" data-icon="person" style="font-variation-settings: 'FILL' 1;">person</span>
+<span class="font-['Plus_Jakarta_Sans'] text-[11px] font-medium mt-1">Profile</span>
+</a>
+</nav>
+</body></html>

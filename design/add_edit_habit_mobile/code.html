@@ -1,0 +1,196 @@
+<!DOCTYPE html>
+
+<html class="light" lang="en"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" name="viewport"/>
+<title>The Living Journal - Edit Habit</title>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<script id="tailwind-config">
+      tailwind.config = {
+        darkMode: "class",
+        theme: {
+          extend: {
+            colors: {
+              "outline": "#797b78",
+              "surface-container-low": "#f4f4f0",
+              "primary-dim": "#903700",
+              "inverse-on-surface": "#9d9d9a",
+              "tertiary-fixed": "#fcc3ce",
+              "on-primary-container": "#381100",
+              "on-secondary": "#fdf7ff",
+              "primary": "#a33f00",
+              "surface-container-highest": "#e1e3de",
+              "surface-bright": "#faf9f6",
+              "surface-container": "#eeeeea",
+              "on-tertiary-container": "#643c45",
+              "on-tertiary-fixed-variant": "#6e454e",
+              "tertiary": "#7f535c",
+              "inverse-surface": "#0d0f0d",
+              "on-primary-fixed-variant": "#481800",
+              "surface-container-lowest": "#ffffff",
+              "tertiary-fixed-dim": "#edb5c0",
+              "on-primary": "#fff7f5",
+              "inverse-primary": "#fc7127",
+              "on-error": "#fff7f6",
+              "on-secondary-container": "#54505c",
+              "on-secondary-fixed": "#413d49",
+              "surface-variant": "#e1e3de",
+              "secondary-fixed-dim": "#d9d2e1",
+              "error-dim": "#791903",
+              "on-tertiary-fixed": "#4e2932",
+              "secondary-container": "#e7e0ef",
+              "outline-variant": "#b0b3ae",
+              "tertiary-dim": "#714750",
+              "error-container": "#fd795a",
+              "on-error-container": "#6e1400",
+              "on-background": "#303330",
+              "on-surface-variant": "#5d605c",
+              "background": "#faf9f6",
+              "primary-fixed-dim": "#eb6519",
+              "secondary-dim": "#56515d",
+              "on-secondary-fixed-variant": "#5e5966",
+              "surface-tint": "#a33f00",
+              "surface-container-high": "#e7e9e4",
+              "on-tertiary": "#fff7f7",
+              "tertiary-container": "#fcc3ce",
+              "on-primary-fixed": "#000000",
+              "primary-container": "#fc7127",
+              "surface-dim": "#d9dbd6",
+              "primary-fixed": "#fc7127",
+              "on-surface": "#303330",
+              "secondary": "#625d6a",
+              "secondary-fixed": "#e7e0ef",
+              "error": "#a73b21",
+              "surface": "#faf9f6"
+            },
+            fontFamily: {
+              "headline": ["Plus Jakarta Sans"],
+              "body": ["Plus Jakarta Sans"],
+              "label": ["Plus Jakarta Sans"]
+            },
+            borderRadius: {"DEFAULT": "0.25rem", "lg": "0.5rem", "xl": "0.75rem", "full": "9999px"},
+          },
+        },
+      }
+    </script>
+<style>
+        .material-symbols-outlined {
+            font-variation-settings: 'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 24;
+        }
+        body {
+            -webkit-tap-highlight-color: transparent;
+            overscroll-behavior-y: contain;
+        }
+    </style>
+<style>
+    body {
+      min-height: max(884px, 100dvh);
+    }
+  </style>
+  </head>
+<body class="bg-background text-on-background font-body min-h-screen flex flex-col">
+<!-- Top Navigation Bar -->
+<header class="fixed top-0 w-full z-50 bg-[#faf9f6]/80 dark:bg-stone-900/80 backdrop-blur-md flex justify-between items-center w-full px-6 h-16">
+<button class="text-stone-500 hover:opacity-80 transition-opacity flex items-center justify-center h-10 w-10">
+<span class="material-symbols-outlined" data-icon="close">close</span>
+</button>
+<h1 class="text-xl font-bold text-orange-950 dark:text-orange-50 tracking-tighter font-headline">New Habit</h1>
+<button class="text-primary font-bold text-sm tracking-wide hover:opacity-80 transition-opacity">
+            SAVE
+        </button>
+</header>
+<!-- Main Content Scroll Area -->
+<main class="flex-1 pt-24 pb-12 px-6 overflow-y-auto">
+<!-- Header Section -->
+<div class="mb-10">
+<h2 class="text-3xl font-extrabold tracking-tight text-on-surface mb-2">Notice your rhythm.</h2>
+<p class="text-secondary label-md">Every small step is a page in your journal.</p>
+</div>
+<form class="space-y-10">
+<!-- Name Input -->
+<section class="space-y-4">
+<label class="block text-sm font-semibold tracking-wider text-secondary uppercase" for="habit-name">HABIT NAME</label>
+<input class="w-full bg-transparent border-b border-outline-variant/30 py-4 text-xl font-medium focus:outline-none focus:border-primary transition-colors placeholder:text-stone-300" id="habit-name" placeholder="E.g., Morning Meditation" type="text"/>
+</section>
+<!-- Frequency Chips -->
+<section class="space-y-4">
+<label class="block text-sm font-semibold tracking-wider text-secondary uppercase">FREQUENCY</label>
+<div class="flex flex-wrap gap-3">
+<button class="px-6 py-3 rounded-full bg-primary-container text-on-primary-container font-semibold shadow-sm transition-transform active:scale-95" type="button">Daily</button>
+<button class="px-6 py-3 rounded-full bg-surface-container-low text-on-surface-variant font-medium transition-transform active:scale-95 hover:bg-surface-container-high" type="button">Weekly</button>
+<button class="px-6 py-3 rounded-full bg-surface-container-low text-on-surface-variant font-medium transition-transform active:scale-95 hover:bg-surface-container-high" type="button">Custom</button>
+</div>
+</section>
+<!-- Category Grid -->
+<section class="space-y-4">
+<div class="flex justify-between items-end">
+<label class="block text-sm font-semibold tracking-wider text-secondary uppercase">CATEGORY</label>
+</div>
+<div class="grid grid-cols-2 gap-3">
+<div class="bg-surface-container-low rounded-2xl p-4 flex items-center gap-4 cursor-pointer hover:bg-surface-container-high transition-colors">
+<div class="h-10 w-10 rounded-xl bg-primary/10 flex items-center justify-center text-primary">
+<span class="material-symbols-outlined" data-icon="self_improvement">self_improvement</span>
+</div>
+<span class="font-medium">Mind</span>
+</div>
+<div class="bg-surface-container-lowest border border-primary/20 rounded-2xl p-4 flex items-center gap-4 cursor-pointer shadow-sm">
+<div class="h-10 w-10 rounded-xl bg-primary flex items-center justify-center text-white">
+<span class="material-symbols-outlined" data-icon="fitness_center" style="font-variation-settings: 'FILL' 1;">fitness_center</span>
+</div>
+<span class="font-bold text-primary">Health</span>
+</div>
+<div class="bg-surface-container-low rounded-2xl p-4 flex items-center gap-4 cursor-pointer hover:bg-surface-container-high transition-colors">
+<div class="h-10 w-10 rounded-xl bg-primary/10 flex items-center justify-center text-primary">
+<span class="material-symbols-outlined" data-icon="menu_book">menu_book</span>
+</div>
+<span class="font-medium">Growth</span>
+</div>
+<div class="bg-surface-container-low rounded-2xl p-4 flex items-center gap-4 cursor-pointer hover:bg-surface-container-high transition-colors">
+<div class="h-10 w-10 rounded-xl bg-primary/10 flex items-center justify-center text-primary">
+<span class="material-symbols-outlined" data-icon="eco">eco</span>
+</div>
+<span class="font-medium">Nature</span>
+</div>
+</div>
+</section>
+<!-- Reminder Time Picker -->
+<section class="space-y-4">
+<label class="block text-sm font-semibold tracking-wider text-secondary uppercase">REMINDER TIME</label>
+<div class="bg-surface-container-low rounded-3xl p-6 flex items-center justify-between shadow-inner">
+<div class="flex items-center gap-4">
+<span class="material-symbols-outlined text-secondary" data-icon="notifications_active">notifications_active</span>
+<span class="text-2xl font-bold tracking-tight">08:30 AM</span>
+</div>
+<button class="h-12 w-12 rounded-full bg-surface-container-highest flex items-center justify-center text-on-surface active:scale-90 transition-transform" type="button">
+<span class="material-symbols-outlined" data-icon="edit">edit</span>
+</button>
+</div>
+</section>
+<!-- Additional Options (Subtle) -->
+<section class="pt-4 pb-8">
+<div class="flex items-center justify-between p-4 bg-surface-container-low/50 rounded-2xl">
+<div class="flex items-center gap-3">
+<span class="material-symbols-outlined text-stone-400" data-icon="event_repeat">event_repeat</span>
+<span class="text-sm font-medium text-on-surface-variant">End date</span>
+</div>
+<span class="text-sm font-semibold text-primary">None</span>
+</div>
+</section>
+</form>
+<!-- Image Decoration (Editorial Style) -->
+<div class="mt-12 rounded-3xl overflow-hidden aspect-[16/9] relative">
+<img alt="morning sunlight through window" class="w-full h-full object-cover" data-alt="soft morning sunlight streaming through a linen curtain onto a minimalist wooden desk with a ceramic bowl" src="https://lh3.googleusercontent.com/aida-public/AB6AXuAEBn-LyfPh9Bmz8LbCHP5ll7bm20mu_VagGclLwwW8wnlf64PUHWSStJr_s3BF1kf63A13FhjFgsIZzPb141vJQNcymWeZ4hclQjoIg39NM2nArZiJyqQiUtG2tJoW8-Y_evVT34C9t6cHpDvmP_MJrzdO22rfUclMBThinFkl8Ao-1VXcCRQzbgcocGEU0sY_bxU1xdBRLU0XfBCIFyxzrXXoeHlXJwnGfOjmYOAER8uZkIYdKorgG43OXIvNslcFP80s1R8n9ms"/>
+<div class="absolute inset-0 bg-gradient-to-t from-background/60 to-transparent"></div>
+</div>
+</main>
+<!-- Floating Footer Action (Mobile Primary) -->
+<div class="fixed bottom-0 left-0 w-full px-6 pb-10 pt-4 bg-gradient-to-t from-background via-background to-transparent pointer-events-none">
+<button class="pointer-events-auto w-full h-16 rounded-full bg-gradient-to-r from-primary to-primary-container text-white font-bold text-lg shadow-[0_12px_32px_-4px_rgba(48,51,48,0.2)] flex items-center justify-center gap-2 active:scale-95 transition-transform">
+<span>Create Habit</span>
+<span class="material-symbols-outlined" data-icon="arrow_forward">arrow_forward</span>
+</button>
+</div>
+</body></html>

@@ -1,0 +1,257 @@
+<!DOCTYPE html>
+
+<html class="light" lang="en"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<title>The Living Journal - My Journey</title>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@300;400;500;600;700;800&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<script id="tailwind-config">
+      tailwind.config = {
+        darkMode: "class",
+        theme: {
+          extend: {
+            colors: {
+              "outline": "#797b78",
+              "surface-container-low": "#f4f4f0",
+              "primary-dim": "#903700",
+              "inverse-on-surface": "#9d9d9a",
+              "tertiary-fixed": "#fcc3ce",
+              "on-primary-container": "#381100",
+              "on-secondary": "#fdf7ff",
+              "primary": "#a33f00",
+              "surface-container-highest": "#e1e3de",
+              "surface-bright": "#faf9f6",
+              "surface-container": "#eeeeea",
+              "on-tertiary-container": "#643c45",
+              "on-tertiary-fixed-variant": "#6e454e",
+              "tertiary": "#7f535c",
+              "inverse-surface": "#0d0f0d",
+              "on-primary-fixed-variant": "#481800",
+              "surface-container-lowest": "#ffffff",
+              "tertiary-fixed-dim": "#edb5c0",
+              "on-primary": "#fff7f5",
+              "inverse-primary": "#fc7127",
+              "on-error": "#fff7f6",
+              "on-secondary-container": "#54505c",
+              "on-secondary-fixed": "#413d49",
+              "surface-variant": "#e1e3de",
+              "secondary-fixed-dim": "#d9d2e1",
+              "error-dim": "#791903",
+              "on-tertiary-fixed": "#4e2932",
+              "secondary-container": "#e7e0ef",
+              "outline-variant": "#b0b3ae",
+              "tertiary-dim": "#714750",
+              "error-container": "#fd795a",
+              "on-error-container": "#6e1400",
+              "on-background": "#303330",
+              "on-surface-variant": "#5d605c",
+              "background": "#faf9f6",
+              "primary-fixed-dim": "#eb6519",
+              "secondary-dim": "#56515d",
+              "on-secondary-fixed-variant": "#5e5966",
+              "surface-tint": "#a33f00",
+              "surface-container-high": "#e7e9e4",
+              "on-tertiary": "#fff7f7",
+              "tertiary-container": "#fcc3ce",
+              "on-primary-fixed": "#000000",
+              "primary-container": "#fc7127",
+              "surface-dim": "#d9dbd6",
+              "primary-fixed": "#fc7127",
+              "on-surface": "#303330",
+              "secondary": "#625d6a",
+              "secondary-fixed": "#e7e0ef",
+              "error": "#a73b21",
+              "surface": "#faf9f6"
+            },
+            fontFamily: {
+              "headline": ["Plus Jakarta Sans"],
+              "body": ["Plus Jakarta Sans"],
+              "label": ["Plus Jakarta Sans"]
+            },
+            borderRadius: {"DEFAULT": "0.25rem", "lg": "0.5rem", "xl": "0.75rem", "full": "9999px"},
+          },
+        },
+      }
+    </script>
+<style>
+        body { font-family: 'Plus Jakarta Sans', sans-serif; background-color: #faf9f6; }
+        .material-symbols-outlined {
+            font-variation-settings: 'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 24;
+        }
+        .bg-gradient-primary {
+            background: linear-gradient(135deg, #a33f00 0%, #fc7127 100%);
+        }
+        .heatmap-grid {
+            display: grid;
+            grid-template-columns: repeat(7, 1fr);
+            gap: 6px;
+        }
+    </style>
+<style>
+    body {
+      min-height: max(884px, 100dvh);
+    }
+  </style>
+  </head>
+<body class="text-on-background selection:bg-primary-container selection:text-on-primary-container">
+<!-- TopAppBar Execution from JSON -->
+<nav class="fixed top-0 w-full z-50 bg-[#faf9f6]/80 dark:bg-stone-900/80 backdrop-blur-md flex justify-between items-center w-full px-6 h-16">
+<div class="flex items-center gap-3">
+<div class="w-8 h-8 rounded-full bg-surface-container-high flex items-center justify-center overflow-hidden">
+<img alt="User Profile" class="w-full h-full object-cover" data-alt="close up portrait of a smiling woman with a warm friendly expression and natural lighting" src="https://lh3.googleusercontent.com/aida-public/AB6AXuBdUYfQaKrJdN6tgsf5lk-h6nShgxhPr4BF7i8McBXOHFwGVdtgzFbHCX8icjl1Pc2s2UwBZQzOfnLhakAia7uk9q259CwG5hVBQ39pBW8cXuYhuQ-rVL4iQcBGd0Y2cGrXsNHnNOOswlxkSsJXLs4n462v-vlr8TmyJlg-Ijpca-_NV7aV8RCmRFBM5IIEnctWAQkrQ_qBofBdLfYHWvB9lRVxeIcdXia3fl-ZsMZwxzlUZhRlILCPehItsOsDIH1UVAe4ntyqahw"/>
+</div>
+</div>
+<h1 class="text-xl font-bold text-orange-950 dark:text-orange-50 tracking-tighter">The Living Journal</h1>
+<button class="hover:opacity-80 transition-opacity p-2 rounded-full">
+<span class="material-symbols-outlined text-orange-900 dark:text-orange-200">settings</span>
+</button>
+</nav>
+<main class="pt-24 pb-32 px-6 max-w-md mx-auto">
+<!-- Welcome Insight Section -->
+<header class="mb-10">
+<p class="text-secondary font-medium label-md mb-2">My Journey</p>
+<h2 class="text-3xl font-extrabold tracking-tight text-on-surface leading-tight">
+                You're doing great with your morning rituals.
+            </h2>
+</header>
+<!-- Bento Grid for Visual Progress -->
+<div class="grid grid-cols-2 gap-4 mb-10">
+<!-- Streak Card -->
+<div class="col-span-1 bg-surface-container-low p-5 rounded-[2rem] flex flex-col justify-between aspect-square">
+<span class="material-symbols-outlined text-primary text-3xl" style="font-variation-settings: 'FILL' 1;">local_fire_department</span>
+<div>
+<p class="text-4xl font-extrabold tracking-tighter text-on-surface">12</p>
+<p class="text-sm font-medium text-secondary">Day streak</p>
+</div>
+</div>
+<!-- Focus Level Card -->
+<div class="col-span-1 bg-primary-container/10 p-5 rounded-[2rem] flex flex-col justify-between aspect-square">
+<span class="material-symbols-outlined text-primary text-3xl">psychology</span>
+<div>
+<p class="text-4xl font-extrabold tracking-tighter text-primary">88%</p>
+<p class="text-sm font-medium text-secondary">Consistency</p>
+</div>
+</div>
+<!-- Heatmap Visualization -->
+<div class="col-span-2 bg-surface-container-low p-6 rounded-[2.5rem]">
+<div class="flex justify-between items-center mb-6">
+<h3 class="text-lg font-bold text-on-surface">Weekly Rhythm</h3>
+<span class="text-xs font-semibold text-secondary uppercase tracking-widest">Last 4 Weeks</span>
+</div>
+<div class="heatmap-grid">
+<!-- Week 1 -->
+<div class="w-full aspect-square rounded-lg bg-primary/20"></div>
+<div class="w-full aspect-square rounded-lg bg-primary/40"></div>
+<div class="w-full aspect-square rounded-lg bg-primary/10"></div>
+<div class="w-full aspect-square rounded-lg bg-primary/60"></div>
+<div class="w-full aspect-square rounded-lg bg-primary"></div>
+<div class="w-full aspect-square rounded-lg bg-primary/20"></div>
+<div class="w-full aspect-square rounded-lg bg-primary/40"></div>
+<!-- Week 2 -->
+<div class="w-full aspect-square rounded-lg bg-primary/80"></div>
+<div class="w-full aspect-square rounded-lg bg-primary"></div>
+<div class="w-full aspect-square rounded-lg bg-primary/40"></div>
+<div class="w-full aspect-square rounded-lg bg-primary/10"></div>
+<div class="w-full aspect-square rounded-lg bg-primary/20"></div>
+<div class="w-full aspect-square rounded-lg bg-primary/60"></div>
+<div class="w-full aspect-square rounded-lg bg-primary/90"></div>
+<!-- Week 3 -->
+<div class="w-full aspect-square rounded-lg bg-primary"></div>
+<div class="w-full aspect-square rounded-lg bg-primary/80"></div>
+<div class="w-full aspect-square rounded-lg bg-primary/70"></div>
+<div class="w-full aspect-square rounded-lg bg-primary/90"></div>
+<div class="w-full aspect-square rounded-lg bg-primary"></div>
+<div class="w-full aspect-square rounded-lg bg-primary/80"></div>
+<div class="w-full aspect-square rounded-lg bg-primary"></div>
+<!-- Week 4 (Current) -->
+<div class="w-full aspect-square rounded-lg bg-primary/20"></div>
+<div class="w-full aspect-square rounded-lg bg-primary/40"></div>
+<div class="w-full aspect-square rounded-lg bg-primary/10"></div>
+<div class="w-full aspect-square rounded-lg bg-primary/60"></div>
+<div class="w-full aspect-square rounded-lg border-2 border-primary bg-primary/10"></div>
+<div class="w-full aspect-square rounded-lg bg-surface-container-highest"></div>
+<div class="w-full aspect-square rounded-lg bg-surface-container-highest"></div>
+</div>
+<div class="mt-4 flex justify-between items-center text-[10px] font-bold text-secondary uppercase tracking-widest px-1">
+<span>Mon</span>
+<span>Tue</span>
+<span>Wed</span>
+<span>Thu</span>
+<span>Fri</span>
+<span>Sat</span>
+<span>Sun</span>
+</div>
+</div>
+</div>
+<!-- Progress Bars Section -->
+<section class="space-y-8">
+<h3 class="text-xl font-bold text-on-surface px-1">Small steps today</h3>
+<div class="space-y-6">
+<!-- Habit 1 -->
+<div>
+<div class="flex justify-between items-end mb-3 px-1">
+<span class="text-lg font-semibold text-on-surface">Morning Meditation</span>
+<span class="text-sm font-medium text-primary">5/7 days</span>
+</div>
+<div class="h-3 w-full bg-surface-container-highest rounded-full overflow-hidden">
+<div class="h-full bg-primary rounded-full" style="width: 71%"></div>
+</div>
+</div>
+<!-- Habit 2 -->
+<div>
+<div class="flex justify-between items-end mb-3 px-1">
+<span class="text-lg font-semibold text-on-surface">Hydration Ritual</span>
+<span class="text-sm font-medium text-primary">7/7 days</span>
+</div>
+<div class="h-3 w-full bg-surface-container-highest rounded-full overflow-hidden">
+<div class="h-full bg-primary rounded-full" style="width: 100%"></div>
+</div>
+</div>
+<!-- Habit 3 -->
+<div>
+<div class="flex justify-between items-end mb-3 px-1">
+<span class="text-lg font-semibold text-on-surface">Reading Time</span>
+<span class="text-sm font-medium text-primary">3/7 days</span>
+</div>
+<div class="h-3 w-full bg-surface-container-highest rounded-full overflow-hidden">
+<div class="h-full bg-primary rounded-full" style="width: 42%"></div>
+</div>
+</div>
+</div>
+</section>
+<!-- Quote/Reflection Block -->
+<div class="mt-12 p-8 bg-tertiary-container/20 rounded-[2.5rem] border border-tertiary/10">
+<span class="material-symbols-outlined text-tertiary mb-4">format_quote</span>
+<p class="text-lg font-medium italic text-on-tertiary-container leading-relaxed">
+                "The secret of your future is hidden in your daily routine."
+            </p>
+<p class="mt-4 text-sm font-bold text-tertiary tracking-wide">Notice your rhythm.</p>
+</div>
+</main>
+<!-- BottomNavBar Execution from JSON -->
+<nav class="fixed bottom-0 left-0 w-full flex justify-around items-center px-4 pb-6 pt-3 bg-[#faf9f6]/80 dark:bg-stone-900/80 backdrop-blur-md z-50 rounded-t-3xl shadow-[0_-12px_32px_-4px_rgba(48,51,48,0.06)] border-t border-stone-200/10">
+<!-- Daily -->
+<a class="flex flex-col items-center justify-center text-stone-500 dark:text-stone-400 px-4 py-1.5 hover:bg-stone-100/50 dark:hover:bg-stone-800/50 transition-all active:scale-90 duration-300" href="#">
+<span class="material-symbols-outlined mb-1">today</span>
+<span class="font-plus-jakarta-sans text-[11px] font-medium tracking-wide">Daily</span>
+</a>
+<!-- Habits -->
+<a class="flex flex-col items-center justify-center text-stone-500 dark:text-stone-400 px-4 py-1.5 hover:bg-stone-100/50 dark:hover:bg-stone-800/50 transition-all active:scale-90 duration-300" href="#">
+<span class="material-symbols-outlined mb-1">auto_awesome_motion</span>
+<span class="font-plus-jakarta-sans text-[11px] font-medium tracking-wide">Habits</span>
+</a>
+<!-- Stats (Active based on Intent: Analytics Screen) -->
+<a class="flex flex-col items-center justify-center bg-orange-100/50 dark:bg-orange-900/20 text-orange-900 dark:text-orange-100 rounded-2xl px-4 py-1.5 active:scale-90 transition-transform duration-300" href="#">
+<span class="material-symbols-outlined mb-1" style="font-variation-settings: 'FILL' 1;">leaderboard</span>
+<span class="font-plus-jakarta-sans text-[11px] font-medium tracking-wide">Stats</span>
+</a>
+<!-- Settings -->
+<a class="flex flex-col items-center justify-center text-stone-500 dark:text-stone-400 px-4 py-1.5 hover:bg-stone-100/50 dark:hover:bg-stone-800/50 transition-all active:scale-90 duration-300" href="#">
+<span class="material-symbols-outlined mb-1">tune</span>
+<span class="font-plus-jakarta-sans text-[11px] font-medium tracking-wide">Settings</span>
+</a>
+</nav>
+</body></html>

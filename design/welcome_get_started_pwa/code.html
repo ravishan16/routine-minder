@@ -1,0 +1,151 @@
+<!DOCTYPE html>
+
+<html class="light" lang="en"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<title>The Living Journal</title>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@300;400;500;600;700;800&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<script id="tailwind-config">
+      tailwind.config = {
+        darkMode: "class",
+        theme: {
+          extend: {
+            colors: {
+              "outline": "#797b78",
+              "surface-container-low": "#f4f4f0",
+              "primary-dim": "#903700",
+              "inverse-on-surface": "#9d9d9a",
+              "tertiary-fixed": "#fcc3ce",
+              "on-primary-container": "#381100",
+              "on-secondary": "#fdf7ff",
+              "primary": "#a33f00",
+              "surface-container-highest": "#e1e3de",
+              "surface-bright": "#faf9f6",
+              "surface-container": "#eeeeea",
+              "on-tertiary-container": "#643c45",
+              "on-tertiary-fixed-variant": "#6e454e",
+              "tertiary": "#7f535c",
+              "inverse-surface": "#0d0f0d",
+              "on-primary-fixed-variant": "#481800",
+              "surface-container-lowest": "#ffffff",
+              "tertiary-fixed-dim": "#edb5c0",
+              "on-primary": "#fff7f5",
+              "inverse-primary": "#fc7127",
+              "on-error": "#fff7f6",
+              "on-secondary-container": "#54505c",
+              "on-secondary-fixed": "#413d49",
+              "surface-variant": "#e1e3de",
+              "secondary-fixed-dim": "#d9d2e1",
+              "error-dim": "#791903",
+              "on-tertiary-fixed": "#4e2932",
+              "secondary-container": "#e7e0ef",
+              "outline-variant": "#b0b3ae",
+              "tertiary-dim": "#714750",
+              "error-container": "#fd795a",
+              "on-error-container": "#6e1400",
+              "on-background": "#303330",
+              "on-surface-variant": "#5d605c",
+              "background": "#faf9f6",
+              "primary-fixed-dim": "#eb6519",
+              "secondary-dim": "#56515d",
+              "on-secondary-fixed-variant": "#5e5966",
+              "surface-tint": "#a33f00",
+              "surface-container-high": "#e7e9e4",
+              "on-tertiary": "#fff7f7",
+              "tertiary-container": "#fcc3ce",
+              "on-primary-fixed": "#000000",
+              "primary-container": "#fc7127",
+              "surface-dim": "#d9dbd6",
+              "primary-fixed": "#fc7127",
+              "on-surface": "#303330",
+              "secondary": "#625d6a",
+              "secondary-fixed": "#e7e0ef",
+              "error": "#a73b21",
+              "surface": "#faf9f6"
+            },
+            fontFamily: {
+              "headline": ["Plus Jakarta Sans"],
+              "body": ["Plus Jakarta Sans"],
+              "label": ["Plus Jakarta Sans"]
+            },
+            borderRadius: {"DEFAULT": "0.25rem", "lg": "0.5rem", "xl": "0.75rem", "full": "9999px"},
+          },
+        },
+      }
+    </script>
+<style>
+        .material-symbols-outlined {
+            font-variation-settings: 'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 24;
+        }
+        body {
+            font-family: 'Plus Jakarta Sans', sans-serif;
+            background-color: #faf9f6;
+            color: #303330;
+        }
+    </style>
+<style>
+    body {
+      min-height: max(884px, 100dvh);
+    }
+  </style>
+  </head>
+<body class="bg-background text-on-background min-h-screen flex flex-col">
+<!-- Top Bar (Suppressed Shell for focused onboarding journey) -->
+<header class="fixed top-0 w-full z-50 bg-[#faf9f6]/80 backdrop-blur-md px-6 h-16 flex justify-between items-center">
+<div class="text-xl font-bold text-orange-950 tracking-tighter">The Living Journal</div>
+<div class="w-8 h-8 rounded-full bg-surface-container flex items-center justify-center">
+<span class="material-symbols-outlined text-sm text-secondary">help_outline</span>
+</div>
+</header>
+<main class="flex-grow flex flex-col pt-16 px-6 pb-12 max-w-md mx-auto w-full">
+<!-- Hero Visual Section -->
+<section class="mt-8 mb-12 relative">
+<div class="w-full aspect-[4/5] rounded-[2.5rem] overflow-hidden bg-surface-container-low shadow-sm">
+<img class="w-full h-full object-cover opacity-90" data-alt="serene morning sunlight streaming through a window onto a wooden table with a ceramic mug and a closed journal" src="https://lh3.googleusercontent.com/aida-public/AB6AXuCUJAY_WfuTUUAEdWBE1Wn7MlMXItWX0NDGr-U5ZHiL8CtNKxgTRTdnzX5rjPW1Cxzn3A2E9zT6PqBjzQKnrCO6RckGwSpDm2FYoABFTo8nlTwhzp0nRJe6WeDB2XklZRRScIuhXKcgZ90CoCRcqQEQv_xlNDK2bZSc8nuVMck7D1exezkOgDV_2bl_-jcwzphapKRImvOEXdxn6Q_71UrdSfUvG1_hQaKIDLDyKEa37S2QIk5v5XZy40yElY1hNzcRijjBf-lafAw"/>
+<div class="absolute inset-0 bg-gradient-to-t from-[#faf9f6] via-transparent to-transparent opacity-40"></div>
+</div>
+<!-- Floating Decorative Element -->
+<div class="absolute -bottom-6 -right-2 bg-surface-container-lowest p-4 rounded-3xl shadow-[0_12px_32px_-4px_rgba(48,51,48,0.06)] border border-surface-container/30">
+<div class="flex items-center gap-3">
+<div class="w-10 h-10 rounded-full bg-tertiary-container flex items-center justify-center text-on-tertiary-container">
+<span class="material-symbols-outlined" style="font-variation-settings: 'FILL' 1;">eco</span>
+</div>
+<div>
+<div class="text-[10px] uppercase tracking-widest text-secondary font-bold">Current Pace</div>
+<div class="text-sm font-semibold text-on-surface">Softly growing</div>
+</div>
+</div>
+</div>
+</section>
+<!-- Welcome Text -->
+<section class="mb-12">
+<h1 class="text-4xl font-extrabold text-on-surface tracking-tight leading-[1.1] mb-4">
+                Your morning <br/>ritual starts here.
+            </h1>
+<p class="text-secondary text-lg leading-relaxed font-medium opacity-80 max-w-[280px]">
+                A quiet space for the habits that shape your days.
+            </p>
+</section>
+<!-- Action Area -->
+<section class="mt-auto space-y-4">
+<button class="w-full h-14 rounded-full bg-gradient-to-br from-primary to-primary-container text-on-primary font-bold text-lg flex items-center justify-center gap-2 shadow-[0_8px_20px_-4px_rgba(163,63,0,0.3)] hover:opacity-90 transition-all active:scale-95">
+                Get Started
+                <span class="material-symbols-outlined">east</span>
+</button>
+<button class="w-full h-14 rounded-full bg-surface-container-high text-on-surface font-semibold text-base flex items-center justify-center hover:bg-surface-container-highest transition-colors active:scale-95">
+                Log In
+            </button>
+<div class="pt-4 flex justify-center">
+<p class="text-[11px] text-outline tracking-wider uppercase font-bold">
+                    Private • End-to-end Encrypted
+                </p>
+</div>
+</section>
+</main>
+<!-- Aesthetic Decorative Background Blob -->
+<div class="fixed -z-10 top-1/4 -left-20 w-64 h-64 bg-primary-container/5 blur-[80px] rounded-full"></div>
+<div class="fixed -z-10 bottom-1/4 -right-20 w-80 h-80 bg-tertiary-container/10 blur-[100px] rounded-full"></div>
+</body></html>
