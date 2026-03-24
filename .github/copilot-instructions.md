@@ -12,21 +12,22 @@ These instructions guide GitHub Copilot and AI agents to work productively in th
 - [Deployment Guide](../DEPLOYMENT.md)
 - [Roadmap](../ROADMAP.md)
 - [README](../README.md)
-- [Google Brand Verification](../GOOGLE_VERIFICATION.md)
-- [Contributing Guide](../CONTRIBUTING.md)
-- [Design](../design/humble_hearth/DESIGN.md)
+- [Design (Humble Hearth)](../design/humble_hearth/DESIGN.md)
+- [Mockups (Mobile Designs)](../design/)
 
 ---
 
 
 ## Build & Test Commands
 **Frontend (Root):**
+- Node Version: `22`
 - Dev: `npm run dev`
 - Build/Type-Check: `npm run build`
 - Test: `npm run test` (Vitest)
 - E2E: `npm run test:e2e` (Playwright)
 
 **Backend (Worker Directory):**
+- Node Version: `22`
 - Dev: `npm run dev` (Wrangler/Hono)
 - Deploy: `npm run deploy`
 - Database: `npm run db:create` | `npm run db:migrate`
@@ -35,10 +36,11 @@ These instructions guide GitHub Copilot and AI agents to work productively in th
 
 
 ## Architecture Principles
-- **Offline-First:** IndexedDB/LocalStorage is the primary data source. UI must be optimistic and functional without a network connection.
-- **Unified Type Safety:** Shared Zod schemas should define the contract between the React frontend and the Hono worker.
+- **Offline-First:** LocalStorage is the primary data source (implemented in `client/src/lib/storage.ts`). UI must be optimistic and functional without a network connection.
+- **Type Safety:** Shared types in `client/src/lib/schema.ts` define the contract between the React frontend and the Hono worker.
 - **Edge-Ready:** Backend logic must remain lightweight for Cloudflare Workers; avoid heavy Node.js-specific dependencies.
 - **Design System:** Use shadcn/ui components exclusively. Do not create raw CSS unless absolutely necessary; use Tailwind utility classes.
+- **Future Design:** Refer to `design/humble_hearth/DESIGN.md` for the "Living Journal" aesthetic planned for future implementation.
 
 ---
 
@@ -47,12 +49,13 @@ These instructions guide GitHub Copilot and AI agents to work productively in th
 - **Directory Logic:**
   - `client/src/components/ui/`: Atomic primitives (shadcn). Do not edit directly.
   - `client/src/components/`: Feature-specific components.
-  - `client/src/hooks/`: All data fetching and sync logic (TanStack Query).
-- **Zod-First Development:** Define the schema in shared/ (or equivalent) before implementing the UI form or API endpoint.
+  - `client/src/lib/storage.ts`: All data fetching, sync logic, and TanStack Query function implementations.
+  - `client/src/pages/`: Page-level components where TanStack Query hooks are typically invoked.
+- **Zod Development:** Define the schema in `client/src/lib/schema.ts` before implementing the UI form or API endpoint.
 - **Sync Pattern:**
-  1. `onSuccess` in React Query updates the local cache.
-  2. A background worker or service worker handles the transition to Cloudflare D1.
-- **PWA Management:** Use the `useRegisterSW` hook from `virtual:pwa-register/react` to handle update prompts and offline readiness.
+  1. `onSuccess` in React Query (in page components) invalidates relevant queries.
+  2. `client/src/lib/storage.ts` handles background sync to Cloudflare D1 via `setInterval` and `online` event listeners.
+- **PWA Management:** Use `vite-plugin-pwa` (Workbox) for offline readiness and asset caching.
 
 ---
 

@@ -481,9 +481,25 @@ graph LR
 
 ### Prerequisites
 
-- **Node.js** 20+ (matches CI)
+- **Node.js** 22+ (matches CI)
 - **npm** 9+
 - **Wrangler CLI** (`npm install -g wrangler` or use `npx`)
+
+---
+
+## Design Resources
+
+The project includes several design explorations for future implementation:
+
+| Resource | Description | Path |
+|----------|-------------|------|
+| **Humble Hearth** | The "Living Journal" Design System | `design/humble_hearth/DESIGN.md` |
+| **Habit Editor** | Mobile mockup for adding/editing habits | `design/add_edit_habit_mobile/` |
+| **Journey Stats** | Mobile analytics and progress visualization | `design/my_journey_stats_mobile/` |
+| **Profile Settings** | Mobile settings and account management | `design/settings_profile_mobile/` |
+| **Onboarding** | Get started flow for PWAs | `design/welcome_get_started_pwa/` |
+
+The current implementation follows a **Glassmorphism** aesthetic (detailed in the Design System section), while future versions aim to transition toward the **Humble Hearth** philosophy.
 
 ### Frontend
 

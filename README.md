@@ -43,7 +43,7 @@ For a deep dive into the system architecture, design system, deployment pipeline
 
 ### Prerequisites
 
-- Node.js 20+
+- Node.js 22+
 - npm 9+
 
 ### Setup
