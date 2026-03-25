@@ -106,7 +106,7 @@ export default function TodayPage() {
 
   if (isLoading) {
     return (
-      <div className="p-4 space-y-6">
+      <div className="px-4 py-5 space-y-8">
         <Skeleton className="h-12 w-full" />
         <Skeleton className="h-4 w-full" />
         <div className="space-y-4">
@@ -119,7 +119,7 @@ export default function TodayPage() {
   }
 
   return (
-    <div className="p-4 space-y-6">
+    <div className="pl-4 pr-8 py-5 space-y-10">
       {/* Header */}
       <div className="flex items-center justify-between">
         <DateNavigator
@@ -133,7 +133,7 @@ export default function TodayPage() {
 
       {/* Progress with Mark All Complete */}
       {totalTasks > 0 && (
-        <div className="space-y-2">
+        <div className="space-y-3">
           <ProgressBar value={completedTasks} max={totalTasks} showLabel />
           {hasIncompleteTasks && (
             <button
@@ -150,9 +150,9 @@ export default function TodayPage() {
 
       {/* All Complete Message */}
       {allComplete && (
-        <div className="text-center py-6 px-4 rounded-xl bg-accent/10 border border-accent/20">
-          <CheckCircle2 className="h-10 w-10 mx-auto mb-2 text-accent" />
-          <p className="font-semibold text-accent">All done for today!</p>
+        <div className="text-center py-6 px-4 rounded-2xl bg-primary/10 shadow-ambient">
+          <CheckCircle2 className="h-10 w-10 mx-auto mb-2 text-primary" />
+          <p className="font-semibold text-primary">All done for today!</p>
           <p className="text-sm text-muted-foreground">Great job keeping up with your routines</p>
         </div>
       )}
@@ -167,7 +167,7 @@ export default function TodayPage() {
         const completedInCategory = categoryItems.filter((item) => item.isCompleted).length;
 
         return (
-          <div key={category} className="space-y-3">
+          <div key={category} className="space-y-4">
             <div className="flex items-center justify-between">
               <div className="flex items-center gap-2 text-muted-foreground">
                 <Icon className="h-4 w-4" />
@@ -177,7 +177,7 @@ export default function TodayPage() {
                 {completedInCategory}/{categoryItems.length}
               </span>
             </div>
-            <div className="space-y-2">
+            <div className="space-y-[1.4rem]">
               {categoryItems.map(({ routine, isCompleted }) => (
                 <RoutineCheckbox
                   key={`${routine.id}-${category}`}
