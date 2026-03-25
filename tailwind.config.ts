@@ -83,9 +83,12 @@ export default {
         },
       },
       fontFamily: {
-        sans: ["var(--font-sans)"],
+        sans: ["Plus Jakarta Sans", "var(--font-sans)", "system-ui", "sans-serif"],
         serif: ["var(--font-serif)"],
         mono: ["var(--font-mono)"],
+      },
+      boxShadow: {
+        ambient: "0 12px 32px -4px rgba(48, 51, 48, 0.06)",
       },
       keyframes: {
         "accordion-down": {

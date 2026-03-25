@@ -187,7 +187,7 @@ export default function DashboardPage() {
             {theme === "dark" ? <Sun className="h-5 w-5" /> : <Moon className="h-5 w-5" />}
           </Button>
         </div>
-        <div className="glass-card p-12 text-center space-y-6 animate-in fade-in zoom-in-95 duration-500">
+        <div className="bg-card rounded-3xl shadow-ambient p-12 text-center space-y-6 animate-in fade-in zoom-in-95 duration-500">
           <div className="text-7xl">📊</div>
           <div>
             <h2 className="text-2xl font-bold">No Data Yet</h2>
@@ -232,7 +232,7 @@ export default function DashboardPage() {
       </div>
 
       {/* Stats Overview Card */}
-      <div ref={statsCardRef} className="glass-card p-5 space-y-5">
+      <div ref={statsCardRef} className="bg-card rounded-3xl shadow-ambient p-5 space-y-5">
         <div className="flex items-center justify-between">
           <div className="flex-1">
             <p className="text-xs font-medium text-muted-foreground uppercase tracking-wider">Level {stats.level.level}</p>
@@ -256,14 +256,14 @@ export default function DashboardPage() {
         </div>
 
         {stats.streakMultiplier.label && (
-          <div className="inline-flex items-center gap-2 px-3 py-1.5 rounded-full bg-amber-500/10 border border-amber-500/20 text-amber-600 dark:text-amber-400 text-xs font-medium">
+          <div className="inline-flex items-center gap-2 px-3 py-1.5 rounded-full bg-amber-500/10 text-amber-600 dark:text-amber-400 text-xs font-medium">
             <Zap className="h-3.5 w-3.5" />
             {stats.streakMultiplier.label} — {stats.streakMultiplier.multiplier}x XP
           </div>
         )}
 
         {/* Key Stats Grid */}
-        <div className="grid grid-cols-4 gap-3 pt-3 border-t border-border/50">
+        <div className="grid grid-cols-4 gap-3 pt-3">
           <div className="text-center">
             <div className="flex items-center justify-center gap-1 mb-1">
               <Flame className="h-4 w-4 text-orange-500" />
@@ -296,7 +296,7 @@ export default function DashboardPage() {
       </div>
 
       {/* Activity Heatmap */}
-      <div ref={activityRef} className="glass-card p-5">
+      <div ref={activityRef} className="bg-card rounded-3xl shadow-ambient p-5">
         <div className="flex items-center gap-2 mb-4">
           <Calendar className="h-4 w-4 text-primary" />
           <h3 className="font-semibold text-sm">Activity</h3>
@@ -317,7 +317,7 @@ export default function DashboardPage() {
         </div>
         <ActivityHeatmap completions={completions} days={365} />
         {completions.length > 0 && (
-          <div className="mt-3 pt-3 border-t border-border/30 flex justify-between text-xs text-muted-foreground">
+          <div className="mt-3 pt-3 flex justify-between text-xs text-muted-foreground">
             <span>
               {(() => {
                 const sortedDates = completions.map(c => c.date).sort();
@@ -337,7 +337,7 @@ export default function DashboardPage() {
       </div>
 
       {/* Achievements Section */}
-      <div ref={achievementsRef} className="glass-card p-5 space-y-4">
+      <div ref={achievementsRef} className="bg-card rounded-3xl shadow-ambient p-5 space-y-4">
         <div className="flex items-center justify-between">
           <div className="flex items-center gap-2">
             <Award className="h-4 w-4 text-primary" />
@@ -361,7 +361,7 @@ export default function DashboardPage() {
               {unlockedAchievementDetails.slice(-6).map((achievement) => (
                 <div
                   key={achievement.key}
-                  className="flex-shrink-0 flex flex-col items-center justify-center p-3 w-24 h-28 rounded-xl bg-primary/5 border border-primary/10 shadow-sm"
+                  className="flex-shrink-0 flex flex-col items-center justify-center p-3 w-24 h-28 rounded-xl bg-primary/5 shadow-sm"
                   style={{ minWidth: '6rem', minHeight: '7rem' }}
                 >
                   <div className="text-3xl mb-2 flex items-center justify-center" aria-label={achievement.name}>{achievement.icon}</div>
@@ -376,7 +376,7 @@ export default function DashboardPage() {
 
         {/* Next to unlock */}
         {lockedAchievements.length > 0 && (
-          <div className="space-y-3 pt-4 border-t border-border/30">
+          <div className="space-y-3 pt-4">
             <p className="text-xs font-semibold text-muted-foreground uppercase tracking-wider mb-1">Next to unlock</p>
             {lockedAchievements.map((achievement) => {
               const progressData = getAchievementProgress(achievement, stats);
@@ -398,7 +398,7 @@ export default function DashboardPage() {
       </div>
 
       {/* Time of Day Stats */}
-      <div ref={timeOfDayRef} className="glass-card p-5">
+      <div ref={timeOfDayRef} className="bg-card rounded-3xl shadow-ambient p-5">
         <div className="flex items-center justify-between mb-4">
           <div className="flex items-center gap-2">
             <Sun className="h-4 w-4 text-primary" />
@@ -407,15 +407,15 @@ export default function DashboardPage() {
           <ShareButton section="TimeOfDay" sectionRef={timeOfDayRef} />
         </div>
         <div className="grid grid-cols-3 gap-3">
-          <div className="text-center p-3 rounded-lg bg-orange-500/5 border border-orange-500/10">
+          <div className="text-center p-3 rounded-lg bg-orange-500/5">
             <div className="text-lg font-bold text-orange-600 dark:text-orange-400">{stats.amCompletions}</div>
             <p className="text-[10px] text-muted-foreground uppercase mt-0.5">Morning</p>
           </div>
-          <div className="text-center p-3 rounded-lg bg-yellow-500/5 border border-yellow-500/10">
+          <div className="text-center p-3 rounded-lg bg-yellow-500/5">
             <div className="text-lg font-bold text-yellow-600 dark:text-yellow-400">{stats.noonCompletions}</div>
             <p className="text-[10px] text-muted-foreground uppercase mt-0.5">Noon</p>
           </div>
-          <div className="text-center p-3 rounded-lg bg-indigo-500/5 border border-indigo-500/10">
+          <div className="text-center p-3 rounded-lg bg-indigo-500/5">
             <div className="text-lg font-bold text-indigo-600 dark:text-indigo-400">{stats.pmCompletions}</div>
             <p className="text-[10px] text-muted-foreground uppercase mt-0.5">Evening</p>
           </div>
@@ -423,7 +423,7 @@ export default function DashboardPage() {
       </div>
 
       {/* Routine Performance with Milestones */}
-      <div ref={routinesRef} className="glass-card p-5 space-y-4 max-w-2xl mx-auto shareable">
+      <div ref={routinesRef} className="bg-card rounded-3xl shadow-ambient p-5 space-y-4 max-w-2xl mx-auto shareable">
         <div className="flex items-center justify-between">
           <h3 className="font-semibold text-sm">Routine Performance</h3>
           <ShareButton section="Routines" sectionRef={routinesRef} />
@@ -434,7 +434,7 @@ export default function DashboardPage() {
             return (
               <div
                 key={routine.routineId}
-                className="rounded-xl bg-muted/20 hover:bg-muted/30 transition-colors px-5 py-6 flex flex-col gap-4 shadow-sm w-full"
+                className="rounded-xl bg-secondary/70 hover:bg-secondary transition-colors px-5 py-6 flex flex-col gap-4 shadow-sm w-full"
                 style={{maxWidth:'100%'}}
               >
                 {/* Header row */}
@@ -455,7 +455,7 @@ export default function DashboardPage() {
                 </div>
 
                 {/* Streak milestone */}
-                <div className="pt-3 border-t border-border/30 w-full">
+                <div className="pt-3 w-full">
                   <div className="flex items-center justify-between mb-2 w-full">
                     <div className="flex items-center gap-2">
                       <Flame className="h-4 w-4 text-orange-500" />

@@ -25,9 +25,9 @@ export function ProgressBar({ value, max, className, showLabel = true, size = "d
           <span className="text-sm font-semibold">{value}/{max}</span>
         </div>
       )}
-      <div className={cn("w-full bg-muted rounded-full overflow-hidden", heightClass[size])}>
+      <div className={cn("w-full bg-secondary rounded-full overflow-hidden", heightClass[size])}>
         <div
-          className="h-full bg-accent rounded-full transition-all duration-500 ease-out"
+          className="h-full bg-primary rounded-full transition-all duration-500 ease-out"
           style={{ width: `${percentage}%` }}
         />
       </div>
