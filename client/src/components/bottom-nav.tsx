@@ -1,11 +1,12 @@
 import { useLocation, Link } from "wouter";
-import { CheckSquare, List, BarChart3, Settings } from "lucide-react";
+import { CheckSquare, List, BarChart3, Settings, Lightbulb } from "lucide-react";
 import { cn } from "@/lib/utils";
 
 const navItems = [
   { path: "/", label: "Today", icon: CheckSquare },
   { path: "/routines", label: "Routines", icon: List },
   { path: "/dashboard", label: "Dashboard", icon: BarChart3 },
+  { path: "/insights", label: "Insights", icon: Lightbulb },
   { path: "/settings", label: "Settings", icon: Settings },
 ];
 
@@ -22,7 +23,7 @@ export function BottomNav() {
               <button
                 data-testid={`nav-${label.toLowerCase()}`}
                 className={cn(
-                  "flex flex-col items-center justify-center gap-1 px-4 py-2 rounded-lg transition-colors min-w-[64px]",
+                  "flex flex-col items-center justify-center gap-1 px-3 py-2 rounded-lg transition-colors min-w-[64px]",
                   isActive
                     ? "text-primary"
                     : "text-muted-foreground hover-elevate"
