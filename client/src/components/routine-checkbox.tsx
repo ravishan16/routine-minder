@@ -26,23 +26,22 @@ export function RoutineCheckbox({ checked, onChange, label, icon, notificationTi
       disabled={disabled}
       onClick={() => onChange(!checked)}
       className={cn(
-        "flex items-center gap-4 w-full p-4 rounded-xl transition-all duration-200",
-        "bg-card border border-card-border",
-        "hover:shadow-sm active:scale-[0.99]",
-        checked && "bg-accent/5 border-accent/30",
+        "flex items-center gap-4 w-full p-5 rounded-2xl transition-all duration-200 min-h-16",
+        "bg-card hover:shadow-ambient active:scale-[0.99]",
+        checked && "bg-primary/10",
         disabled && "opacity-50 cursor-not-allowed"
       )}
     >
       <div
         className={cn(
-          "w-6 h-6 rounded-full border-2 flex items-center justify-center transition-all duration-200 flex-shrink-0",
+          "w-6 h-6 rounded-full flex items-center justify-center transition-all duration-200 flex-shrink-0",
           checked
-            ? "bg-accent border-accent scale-110"
-            : "border-muted-foreground/30 bg-transparent"
+            ? "bg-primary scale-110"
+            : "bg-secondary/70"
         )}
       >
         <Check className={cn(
-          "w-3.5 h-3.5 text-accent-foreground stroke-[3px] transition-all duration-200",
+          "w-3.5 h-3.5 text-primary-foreground stroke-[3px] transition-all duration-200",
           checked ? "opacity-100 scale-100" : "opacity-0 scale-50"
         )} />
       </div>

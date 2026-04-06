@@ -13,7 +13,7 @@ export function BottomNav() {
   const [location] = useLocation();
 
   return (
-    <nav className="fixed bottom-0 left-0 right-0 bg-card border-t border-border safe-area-inset-bottom z-50">
+    <nav className="fixed bottom-0 left-0 right-0 bg-background/80 backdrop-blur-[12px] safe-area-inset-bottom z-50">
       <div className="flex items-center justify-around h-16 max-w-lg mx-auto px-2">
         {navItems.map(({ path, label, icon: Icon }) => {
           const isActive = location === path;
@@ -22,9 +22,9 @@ export function BottomNav() {
               <button
                 data-testid={`nav-${label.toLowerCase()}`}
                 className={cn(
-                  "flex flex-col items-center justify-center gap-1 px-4 py-2 rounded-lg transition-colors min-w-[64px]",
+                  "flex flex-col items-center justify-center gap-1 px-4 py-2 rounded-full transition-colors min-w-[64px]",
                   isActive
-                    ? "text-primary"
+                    ? "text-primary bg-card"
                     : "text-muted-foreground hover-elevate"
                 )}
               >
