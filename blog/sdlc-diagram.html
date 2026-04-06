@@ -1,0 +1,597 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>AI Powered SDLC: The New Division of Labor</title>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+            background: #f7f8fa;
+            color: #2d3748;
+        }
+
+        header {
+            background: linear-gradient(135deg, #0f172a 0%, #1e293b 50%, #0f172a 100%);
+            color: white;
+            text-align: center;
+            padding: 48px 20px 36px;
+            border-bottom: 3px solid #2d3a52;
+        }
+
+        h1 { font-size: 2.3rem; font-weight: 800; letter-spacing: -0.5px; }
+        h1 .accent { color: #7c9cff; }
+
+        .subtitle {
+            margin-top: 14px;
+            font-size: 1.05rem;
+            font-weight: 300;
+            color: #a0aec0;
+        }
+        .subtitle .c-human { color: #e8a838; font-weight: 600; }
+        .subtitle .c-ai { color: #7c9cff; font-weight: 600; }
+        .subtitle .c-compute { color: #48bb78; font-weight: 600; }
+
+        .header-quote {
+            margin-top: 18px;
+            font-size: 0.92rem;
+            font-style: italic;
+            color: #64748b;
+            letter-spacing: 0.2px;
+        }
+        .header-quote q {
+            color: #94a3b8;
+        }
+        .header-quote .attr {
+            font-style: normal;
+            color: #475569;
+            font-weight: 500;
+        }
+
+        .header-author {
+            margin-top: 14px;
+            font-size: 0.82rem;
+            color: #64748b;
+            font-weight: 400;
+            letter-spacing: 0.3px;
+        }
+        .header-author span {
+            color: #a0aec0;
+            font-weight: 600;
+        }
+
+        .banner-tip {
+            background: #fefcf3;
+            border-bottom: 1px solid #f0e6c8;
+            padding: 10px 20px;
+            text-align: center;
+            font-size: 0.88rem;
+            color: #8b6914;
+        }
+
+        .diagram-wrapper {
+            display: flex;
+            justify-content: center;
+            padding: 20px 20px 10px;
+        }
+
+        .diagram-container {
+            position: relative;
+            width: 1200px;
+            height: 1060px;
+        }
+
+        /* SVG connections layer */
+        .connections-svg {
+            position: absolute;
+            top: 0; left: 0;
+            width: 100%; height: 100%;
+            z-index: 1;
+            pointer-events: none;
+        }
+
+        /* Central Repo */
+        .central-repo {
+            position: absolute;
+            left: 50%; top: 50%;
+            transform: translate(-50%, -50%);
+            width: 240px;
+            background: linear-gradient(150deg, #1e293b 0%, #0f172a 100%);
+            border: 2px solid #334155;
+            border-radius: 14px;
+            padding: 24px;
+            box-shadow: 0 8px 32px rgba(0,0,0,0.22), 0 0 0 1px rgba(255,255,255,0.04) inset;
+            z-index: 10;
+            color: #e2e8f0;
+        }
+
+        .repo-header {
+            text-align: center;
+            font-weight: 700;
+            font-size: 1.2rem;
+            color: #f1f5f9;
+        }
+
+        .repo-subheader {
+            text-align: center;
+            font-size: 0.6rem;
+            color: #64748b;
+            text-transform: uppercase;
+            letter-spacing: 2px;
+            margin: 6px 0 16px;
+        }
+
+        .repo-item {
+            display: flex;
+            justify-content: space-between;
+            padding: 9px 0;
+            border-bottom: 1px solid #2d3a4e;
+            font-size: 0.82rem;
+            font-weight: 600;
+            color: #cbd5e1;
+        }
+        .repo-item:last-child { border-bottom: none; }
+
+        /* Phase Cards */
+        .phase {
+            position: absolute;
+            width: 270px;
+            padding: 20px;
+            border-radius: 12px;
+            box-shadow: 0 2px 12px rgba(0,0,0,0.05);
+            z-index: 5;
+        }
+
+        .phase .phase-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 10px;
+        }
+
+        .phase .phase-title {
+            font-size: 1.02rem;
+            font-weight: 700;
+            color: #1a202c;
+        }
+
+        .phase .role-badge {
+            font-size: 0.58rem;
+            font-weight: 700;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+            padding: 3px 9px;
+            border-radius: 10px;
+            white-space: nowrap;
+        }
+
+        .phase p {
+            font-size: 0.82rem;
+            line-height: 1.55;
+            color: #4a5568;
+            margin: 0 0 10px;
+        }
+
+        .phase .hygiene {
+            font-size: 0.72rem;
+            font-weight: 600;
+            color: #718096;
+            line-height: 1.4;
+        }
+        .phase .hygiene strong {
+            color: #c05621;
+            text-transform: uppercase;
+            margin-right: 3px;
+        }
+
+        /* HUMAN — warm amber */
+        .phase.human {
+            background: linear-gradient(135deg, #fffdf5 0%, #fef9e7 50%, #ffffff 100%);
+            border: 1px solid #f6e3a1;
+            border-left: 4px solid #e8a838;
+        }
+        .phase.human .role-badge {
+            background: #fef9e7;
+            color: #975a16;
+            border: 1px solid #f6e3a1;
+        }
+
+        /* AI — slate blue */
+        .phase.ai {
+            background: linear-gradient(135deg, #f0f4ff 0%, #e8eeff 50%, #ffffff 100%);
+            border: 1px solid #b4c6fc;
+            border-left: 4px solid #6c8cff;
+        }
+        .phase.ai .role-badge {
+            background: #e8eeff;
+            color: #2b4acb;
+            border: 1px solid #b4c6fc;
+        }
+
+        /* COMPUTE — teal green */
+        .phase.compute {
+            background: linear-gradient(135deg, #f0faf4 0%, #e2f5ea 50%, #ffffff 100%);
+            border: 1px solid #a3ddb8;
+            border-left: 4px solid #48bb78;
+        }
+        .phase.compute .role-badge {
+            background: #e2f5ea;
+            color: #22543d;
+            border: 1px solid #a3ddb8;
+        }
+
+        /* Dual-role: Compute + AI */
+        .phase.compute-ai {
+            background: linear-gradient(135deg, #f0faf4 0%, #e6f0e9 35%, #e8eeff 65%, #f0f4ff 100%);
+            border: 1px solid #b4c6fc;
+            border-left: 4px solid #48bb78;
+            border-image: none;
+            position: absolute;
+            overflow: hidden;
+        }
+        .phase.compute-ai::before {
+            content: '';
+            position: absolute;
+            left: 0; top: 0;
+            width: 4px; height: 50%;
+            background: #48bb78;
+        }
+        .phase.compute-ai::after {
+            content: '';
+            position: absolute;
+            left: 0; top: 50%;
+            width: 4px; height: 50%;
+            background: #6c8cff;
+        }
+
+        /* Dual-role: Human + AI */
+        .phase.human-ai {
+            background: linear-gradient(135deg, #fffdf5 0%, #fdf6e3 35%, #e8eeff 65%, #f0f4ff 100%);
+            border: 1px solid #b4c6fc;
+            border-left: 4px solid #e8a838;
+            border-image: none;
+            overflow: hidden;
+        }
+        .phase.human-ai::before {
+            content: '';
+            position: absolute;
+            left: 0; top: 0;
+            width: 4px; height: 50%;
+            background: #e8a838;
+        }
+        .phase.human-ai::after {
+            content: '';
+            position: absolute;
+            left: 0; top: 50%;
+            width: 4px; height: 50%;
+            background: #6c8cff;
+        }
+
+        /* Dual-role: Human + Compute */
+        .phase.human-compute {
+            background: linear-gradient(135deg, #fffdf5 0%, #fdf6e3 35%, #e2f5ea 65%, #f0faf4 100%);
+            border: 1px solid #a3ddb8;
+            border-left: 4px solid #e8a838;
+            border-image: none;
+            overflow: hidden;
+        }
+        .phase.human-compute::before {
+            content: '';
+            position: absolute;
+            left: 0; top: 0;
+            width: 4px; height: 50%;
+            background: #e8a838;
+        }
+        .phase.human-compute::after {
+            content: '';
+            position: absolute;
+            left: 0; top: 50%;
+            width: 4px; height: 50%;
+            background: #48bb78;
+        }
+
+        /* Dual role badges container */
+        .dual-badges {
+            display: flex;
+            gap: 4px;
+        }
+        .dual-badges .role-badge {
+            font-size: 0.52rem;
+            padding: 2px 6px;
+        }
+        .role-badge.badge-human {
+            background: #fef9e7;
+            color: #975a16;
+            border: 1px solid #f6e3a1;
+        }
+        .role-badge.badge-ai {
+            background: #e8eeff;
+            color: #2b4acb;
+            border: 1px solid #b4c6fc;
+        }
+        .role-badge.badge-compute {
+            background: #e2f5ea;
+            color: #22543d;
+            border: 1px solid #a3ddb8;
+        }
+
+        /* Phase positions — orbit around center with room for icons */
+        .p1 { left: 80px; top: 110px; }
+        .p2 { right: 30px; top: 110px; }
+        .p3 { right: 30px; top: 430px; }
+        .p4 { right: 30px; top: 750px; }
+        .p5 { left: 80px; top: 750px; }
+        .p6 { left: 80px; top: 430px; }
+
+        /* External tool icons — positioned above their phase, no overlap */
+        .tool-icon {
+            position: absolute;
+            width: 48px;
+            height: 48px;
+            border-radius: 50%;
+            background: #fff;
+            border: 2px solid #d2d6dc;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.08);
+            z-index: 8;
+        }
+        .tool-icon .tool-label {
+            position: absolute;
+            bottom: -17px;
+            left: 50%;
+            transform: translateX(-50%);
+            font-size: 0.56rem;
+            font-weight: 700;
+            text-transform: uppercase;
+            letter-spacing: 1.2px;
+            white-space: nowrap;
+        }
+
+        /* JIRA — above Phase 1, horizontally centered */
+        .icon-jira { left: 190px; top: 38px; border-color: #6c8cff; }
+        .icon-jira .tool-label { color: #6c8cff; }
+
+        /* SANDBOX — above Phase 2, horizontally centered */
+        .icon-sandbox { right: 140px; top: 38px; border-color: #2d3748; }
+        .icon-sandbox .tool-label { color: #2d3748; }
+
+        /* CLOUD — far left of Phase 6 (Deploy), vertically centered */
+        .icon-cloud { left: 10px; top: 510px; border-color: #4cc9f0; }
+        .icon-cloud .tool-label { color: #4299b4; }
+
+        /* Legend */
+        .legend {
+            display: flex;
+            justify-content: center;
+            gap: 36px;
+            padding: 18px 20px 10px;
+            flex-wrap: wrap;
+        }
+        .legend-item {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            font-size: 0.82rem;
+            font-weight: 600;
+            color: #4a5568;
+        }
+        .legend-swatch {
+            width: 14px;
+            height: 14px;
+            border-radius: 3px;
+            border: 1px solid rgba(0,0,0,0.08);
+        }
+        .legend-swatch.human-sw { background: linear-gradient(135deg, #fef9e7, #e8a838); }
+        .legend-swatch.ai-sw { background: linear-gradient(135deg, #e8eeff, #6c8cff); }
+        .legend-swatch.compute-sw { background: linear-gradient(135deg, #e2f5ea, #48bb78); }
+
+        footer {
+            padding: 16px 40px 40px;
+            max-width: 860px;
+            margin: 0 auto;
+            text-align: center;
+            color: #718096;
+            font-size: 0.92rem;
+            line-height: 1.6;
+        }
+        footer strong { color: #c05621; }
+        footer .blue { color: #4361ee; font-weight: 700; }
+        footer .green { color: #38a169; font-weight: 700; }
+    </style>
+</head>
+<body>
+
+    <header>
+        <h1>AI Powered SDLC: <span class="accent">The New Division of Labor</span></h1>
+        <div class="subtitle">
+            Balancing <span class="c-human">Business Intent</span>, <span class="c-ai">AI Execution</span>, and <span class="c-compute">Deterministic Compute</span> within a structured 6-phase workflow.
+        </div>
+        <div class="header-quote">
+            <q>When a measure becomes a target, it ceases to be a good measure.</q>
+            <span class="attr"> — Goodhart's Law</span>
+        </div>
+        <div class="header-author">By <span>Ravishankar Sivasubramaniam</span></div>
+    </header>
+
+    <div class="banner-tip">
+        🔑 <strong>Prerequisite Scaffolding:</strong> Establish strict linters (e.g., ESLint), formatters, and test frameworks in the repo before initiating the Agentic cycle.
+    </div>
+
+    <div class="diagram-wrapper">
+        <div class="diagram-container">
+
+            <!-- SVG Connection Paths with Action Labels -->
+            <svg class="connections-svg" viewBox="0 0 1200 1060">
+                <defs>
+                    <marker id="arrow" viewBox="0 0 10 7" refX="9" refY="3.5"
+                            markerWidth="8" markerHeight="6" orient="auto-start-reverse">
+                        <polygon points="0 0, 10 3.5, 0 7" fill="#94a3b8"/>
+                    </marker>
+                </defs>
+
+                <!-- 1 → 2 : ASSIGN (top arc, left-to-right) -->
+                <path d="M 360,190 Q 600,300 890,190" fill="none" stroke="#cbd5e1" stroke-width="2" stroke-dasharray="8,5" marker-end="url(#arrow)"/>
+                <rect x="540" y="240" width="120" height="26" rx="13" fill="white" stroke="#f6e3a1" stroke-width="1"/>
+                <text x="600" y="258" text-anchor="middle" font-size="11" font-weight="700" fill="#c05621" font-family="inherit">ASSIGN</text>
+
+                <!-- 2 → 3 : COMMIT / PUSH PR (right side, top-to-mid) -->
+                <path d="M 1050,300 Q 920,370 1050,430" fill="none" stroke="#cbd5e1" stroke-width="2" stroke-dasharray="8,5" marker-end="url(#arrow)"/>
+                <rect x="900" y="350" width="120" height="30" rx="13" fill="white" stroke="#b4c6fc" stroke-width="1"/>
+                <text x="960" y="365" text-anchor="middle" font-size="9" font-weight="700" fill="#4361ee" font-family="inherit">COMMIT /</text>
+                <text x="960" y="376" text-anchor="middle" font-size="9" font-weight="700" fill="#4361ee" font-family="inherit">PUSH PR</text>
+
+                <!-- 3 → 4 : NOTIFY MAINTAINER (right side, mid-to-bottom) -->
+                <path d="M 1050,620 Q 920,690 1050,750" fill="none" stroke="#cbd5e1" stroke-width="2" stroke-dasharray="8,5" marker-end="url(#arrow)"/>
+                <rect x="900" y="665" width="120" height="30" rx="13" fill="white" stroke="#a3ddb8" stroke-width="1"/>
+                <text x="960" y="680" text-anchor="middle" font-size="9" font-weight="700" fill="#38a169" font-family="inherit">NOTIFY</text>
+                <text x="960" y="691" text-anchor="middle" font-size="9" font-weight="700" fill="#38a169" font-family="inherit">MAINTAINER</text>
+
+                <!-- 4 → 5 : APPROVE (bottom arc, right-to-left) -->
+                <path d="M 890,880 Q 600,770 360,880" fill="none" stroke="#cbd5e1" stroke-width="2" stroke-dasharray="8,5" marker-end="url(#arrow)"/>
+                <rect x="540" y="810" width="120" height="26" rx="13" fill="white" stroke="#f6e3a1" stroke-width="1"/>
+                <text x="600" y="828" text-anchor="middle" font-size="11" font-weight="700" fill="#c05621" font-family="inherit">APPROVE</text>
+
+                <!-- 5 → 6 : TRIGGER DEPLOY (left side, bottom-to-mid) -->
+                <path d="M 215,750 Q 340,690 215,620" fill="none" stroke="#cbd5e1" stroke-width="2" stroke-dasharray="8,5" marker-end="url(#arrow)"/>
+                <rect x="240" y="665" width="120" height="30" rx="13" fill="white" stroke="#a3ddb8" stroke-width="1"/>
+                <text x="300" y="680" text-anchor="middle" font-size="9" font-weight="700" fill="#38a169" font-family="inherit">TRIGGER</text>
+                <text x="300" y="691" text-anchor="middle" font-size="9" font-weight="700" fill="#38a169" font-family="inherit">DEPLOY</text>
+
+                <!-- Deploy → Cloud (outgoing arrow to the left) -->
+                <defs>
+                    <marker id="arrow-cloud" viewBox="0 0 10 7" refX="9" refY="3.5"
+                            markerWidth="8" markerHeight="6" orient="auto">
+                        <polygon points="0 0, 10 3.5, 0 7" fill="#4cc9f0"/>
+                    </marker>
+                </defs>
+                <path d="M 80,535 L 58,535" fill="none" stroke="#4cc9f0" stroke-width="2.5" marker-start="url(#arrow-cloud)"/>
+
+                <!-- 6 → 1 : MONITOR & FEEDBACK (left side, mid-to-top) -->
+                <path d="M 215,430 Q 340,370 215,300" fill="none" stroke="#cbd5e1" stroke-width="2" stroke-dasharray="8,5" marker-end="url(#arrow)"/>
+                <rect x="240" y="350" width="120" height="30" rx="13" fill="white" stroke="#f6e3a1" stroke-width="1"/>
+                <text x="300" y="365" text-anchor="middle" font-size="9" font-weight="700" fill="#c05621" font-family="inherit">MONITOR &amp;</text>
+                <text x="300" y="376" text-anchor="middle" font-size="9" font-weight="700" fill="#c05621" font-family="inherit">FEEDBACK</text>
+            </svg>
+
+            <!-- External Tool Icons — positioned clearly above/beside phases -->
+            <div class="tool-icon icon-jira">
+                <img src="https://cdn.jsdelivr.net/gh/devicons/devicon@latest/icons/jira/jira-original.svg" width="22" alt="Jira">
+                <span class="tool-label">JIRA</span>
+            </div>
+            <div class="tool-icon icon-sandbox">
+                💻
+                <span class="tool-label">SANDBOX</span>
+            </div>
+            <div class="tool-icon icon-cloud">
+                ☁️
+                <span class="tool-label">CLOUD</span>
+            </div>
+
+            <!-- Central Git Repo -->
+            <div class="central-repo">
+                <div class="repo-header">🔀 Git Repo</div>
+                <div class="repo-subheader">Self-Contained Source of Truth</div>
+                <div class="repo-item"><span>SPEC.md</span> <span>📄</span></div>
+                <div class="repo-item"><span>CODE</span> <span>💻</span></div>
+                <div class="repo-item"><span>TESTS</span> <span>🧪</span></div>
+                <div class="repo-item"><span>WORKFLOWS</span> <span>⚙️</span></div>
+                <div class="repo-item"><span>SECRETS</span> <span>🔒</span></div>
+            </div>
+
+            <!-- Phase 1: Issue & Spec (HUMAN) -->
+            <div class="phase human p1">
+                <div class="phase-header">
+                    <span class="phase-title">1: Issue &amp; Spec</span>
+                    <span class="role-badge">👤 Human</span>
+                </div>
+                <p>Architect syncs Jira story to a clean GitHub Issue (SPEC.md).</p>
+                <div class="hygiene"><strong>Hygiene:</strong> Define anti-goals. Do not write pseudo-code.</div>
+            </div>
+
+            <!-- Phase 2: Implementation (AI) -->
+            <div class="phase ai p2">
+                <div class="phase-header">
+                    <span class="phase-title">2: Implementation</span>
+                    <span class="role-badge">🤖 AI</span>
+                </div>
+                <p>AI reads SPEC.md, forks branch, writes code, runs local tests.</p>
+                <div class="hygiene"><strong>Hygiene:</strong> Monitor AI token limits. Restrict PR sizes.</div>
+            </div>
+
+            <!-- Phase 3: Quality Gates (COMPUTE + AI) -->
+            <div class="phase compute-ai p3">
+                <div class="phase-header">
+                    <span class="phase-title">3: Quality Gates</span>
+                    <div class="dual-badges">
+                        <span class="role-badge badge-compute">⚙️ Compute</span>
+                        <span class="role-badge badge-ai">🤖 AI</span>
+                    </div>
+                </div>
+                <p>GitHub Actions runs tests. AI Reviewer checks logic.</p>
+                <div class="hygiene"><strong>Hygiene:</strong> Goodhart's Law. Exhaustive unhappy-path testing.</div>
+            </div>
+
+            <!-- Phase 4: Review & Collab (HUMAN + AI) -->
+            <div class="phase human-ai p4">
+                <div class="phase-header">
+                    <span class="phase-title">4: Review &amp; Collab</span>
+                    <div class="dual-badges">
+                        <span class="role-badge badge-human">👤 Human</span>
+                        <span class="role-badge badge-ai">🤖 AI</span>
+                    </div>
+                </div>
+                <p>Maintainer tests UX, and collaborates with AI via PR comments.</p>
+                <div class="hygiene"><strong>Hygiene:</strong> Verify logic. Reject large spaghetti PRs.</div>
+            </div>
+
+            <!-- Phase 5: Merge (HUMAN + COMPUTE) -->
+            <div class="phase human-compute p5">
+                <div class="phase-header">
+                    <span class="phase-title">5: Merge</span>
+                    <div class="dual-badges">
+                        <span class="role-badge badge-human">👤 Human</span>
+                        <span class="role-badge badge-compute">⚙️ Compute</span>
+                    </div>
+                </div>
+                <p>Maintainer approves. Git mechanisms safely merge code.</p>
+                <div class="hygiene"><strong>Hygiene:</strong> Enforce strict linters/formatters upon merge.</div>
+            </div>
+
+            <!-- Phase 6: Deploy (COMPUTE) -->
+            <div class="phase compute p6">
+                <div class="phase-header">
+                    <span class="phase-title">6: Deploy</span>
+                    <span class="role-badge">⚙️ Compute</span>
+                </div>
+                <p>CI/CD automation packages and pushes deterministic build.</p>
+                <div class="hygiene"><strong>Hygiene:</strong> Chaos Engineering. Maintain DR backups.</div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Legend -->
+    <div class="legend">
+        <div class="legend-item">
+            <div class="legend-swatch human-sw"></div>
+            <span>👤 HUMAN (Architect / Maintainer)</span>
+        </div>
+        <div class="legend-item">
+            <div class="legend-swatch ai-sw"></div>
+            <span>🤖 AI (Implementation / Review)</span>
+        </div>
+        <div class="legend-item">
+            <div class="legend-swatch compute-sw"></div>
+            <span>⚙️ COMPUTE (Deterministic CI/CD)</span>
+        </div>
+    </div>
+
+    <footer>
+        The <strong>Architect-Maintainer</strong> defines specifications and oversees the <span class="blue">AI Implementation</span>, while <span class="green">Deterministic Automation</span> enforces rigorous quality gates. The human remains the ultimate gatekeeper before production deployment.
+    </footer>
+
+</body>
+</html>
