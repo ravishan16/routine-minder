@@ -98,6 +98,12 @@ export default function TodayPage() {
     });
   });
 
+  Object.keys(groupedRoutines).forEach((category) => {
+    groupedRoutines[category].sort(
+      (a, b) => (a.routine.sortOrder ?? Number.MAX_SAFE_INTEGER) - (b.routine.sortOrder ?? Number.MAX_SAFE_INTEGER)
+    );
+  });
+
   // Count total tasks (routine × category pairs) and completed ones
   const totalTasks = routines?.reduce((sum, r) => sum + r.timeCategories.length, 0) || 0;
   const completedTasks = routines?.reduce((sum, r) => sum + r.completedCategories.length, 0) || 0;

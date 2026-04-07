@@ -256,6 +256,29 @@ app.post('/api/routines', async (c) => {
 });
 
 // Update routine
+app.put('/api/routines/reorder', async (c) => {
+  const userId = c.req.header('X-User-Id');
+  if (!userId) return c.json({ error: 'Unauthorized' }, 401);
+
+  const body = await c.req.json();
+  const orderedIds = Array.isArray(body?.orderedIds) ? body.orderedIds : [];
+
+  if (orderedIds.length === 0) {
+    return c.json({ error: 'orderedIds must be a non-empty array' }, 400);
+  }
+
+  const statements = orderedIds.map((id: string, index: number) =>
+    c.env.DB
+      .prepare('UPDATE routines SET sort_order = ? WHERE id = ? AND user_id = ?')
+      .bind(index, id, userId)
+  );
+
+  await c.env.DB.batch(statements);
+
+  return c.json({ success: true });
+});
+
+// Update routine
 app.put('/api/routines/:id', async (c) => {
   const userId = c.req.header('X-User-Id');
   if (!userId) return c.json({ error: 'Unauthorized' }, 401);

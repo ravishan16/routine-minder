@@ -220,8 +220,10 @@ export const routinesApi = {
     const seenIds = new Set<string>();
     const seenNames = new Set<string>();
     
-    // Sort to put active routines first
+    // Sort by user-defined order, then by active state
     const sorted = [...routines].sort((a, b) => {
+      const orderDiff = (a.sortOrder ?? Number.MAX_SAFE_INTEGER) - (b.sortOrder ?? Number.MAX_SAFE_INTEGER);
+      if (orderDiff !== 0) return orderDiff;
       if (a.isActive && !b.isActive) return -1;
       if (!a.isActive && b.isActive) return 1;
       return 0;
@@ -234,6 +236,41 @@ export const routinesApi = {
       seenIds.add(r.id);
       seenNames.add(lowerName);
       return true;
+    });
+  },
+
+  reorder: async (orderedIds: string[]): Promise<void> => {
+    if (orderedIds.length <= 1) return;
+
+    const routines = getFromStorage<Routine[]>(KEYS.routines, []);
+    const routineById = new Map(routines.map((routine) => [routine.id, routine]));
+    const reordered: Routine[] = [];
+
+    orderedIds.forEach((id, index) => {
+      const routine = routineById.get(id);
+      if (routine) {
+        reordered.push({
+          ...routine,
+          sortOrder: index,
+        });
+        routineById.delete(id);
+      }
+    });
+
+    // Keep any routines not included in orderedIds at the end
+    routineById.forEach((routine) => {
+      reordered.push({
+        ...routine,
+        sortOrder: reordered.length,
+      });
+    });
+
+    saveToStorage(KEYS.routines, reordered);
+
+    // Fire-and-forget sync; local order remains authoritative
+    api("/api/routines/reorder", {
+      method: "PUT",
+      body: JSON.stringify({ orderedIds }),
     });
   },
 
