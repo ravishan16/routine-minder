@@ -3,7 +3,7 @@ import { useQuery, useMutation } from "@tanstack/react-query";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
-import { Plus, Pencil, Trash2, Bell, BellOff, Sun, Moon } from "lucide-react";
+import { Plus, Pencil, Trash2, Bell, BellOff, Sun, Moon, GripVertical } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
@@ -220,6 +220,8 @@ export default function RoutinesPage() {
   const [editingRoutine, setEditingRoutine] = useState<Routine | null>(null);
   const { theme, toggleTheme } = useTheme();
   const { toast } = useToast();
+  const [draggedId, setDraggedId] = useState<string | null>(null);
+  const [dragOverId, setDragOverId] = useState<string | null>(null);
 
   const { data: routines, isLoading } = useQuery<Routine[]>({
     queryKey: ["routines"],
@@ -255,6 +257,35 @@ export default function RoutinesPage() {
       toast({ title: "Routine deleted", description: "The routine has been removed." });
     },
   });
+
+  const reorderMutation = useMutation({
+    mutationFn: (orderedIds: string[]) => routinesApi.reorder(orderedIds),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["routines"] });
+      queryClient.invalidateQueries({ queryKey: ["routines", "daily"] });
+      toast({ title: "Routine order updated" });
+    },
+  });
+
+  const reorderRoutines = (fromId: string, toId: string) => {
+    if (!routines || fromId === toId) return;
+    const fromIndex = routines.findIndex((routine) => routine.id === fromId);
+    const toIndex = routines.findIndex((routine) => routine.id === toId);
+    if (fromIndex === -1 || toIndex === -1 || fromIndex === toIndex) return;
+
+    const reordered = [...routines];
+    const [moved] = reordered.splice(fromIndex, 1);
+    reordered.splice(toIndex, 0, moved);
+    reorderMutation.mutate(reordered.map((routine) => routine.id));
+  };
+
+  const moveByOffset = (routineId: string, offset: -1 | 1) => {
+    if (!routines) return;
+    const currentIndex = routines.findIndex((routine) => routine.id === routineId);
+    const targetIndex = currentIndex + offset;
+    if (currentIndex === -1 || targetIndex < 0 || targetIndex >= routines.length) return;
+    reorderRoutines(routineId, routines[targetIndex].id);
+  };
 
   return (
     <div className="flex flex-col min-h-screen pb-20">
@@ -321,9 +352,54 @@ export default function RoutinesPage() {
           </div>
         ) : (
           routines?.map((routine) => (
-            <Card key={routine.id} className="p-4" data-testid={`card-routine-${routine.id}`}>
+            <Card
+              key={routine.id}
+              className={`p-4 transition-all ${draggedId === routine.id ? "opacity-70 ring-2 ring-primary shadow-lg scale-[1.01]" : ""} ${dragOverId === routine.id ? "ring-2 ring-primary/40" : ""}`}
+              data-testid={`card-routine-${routine.id}`}
+              onDragOver={(e) => {
+                if (!draggedId || draggedId === routine.id) return;
+                e.preventDefault();
+                setDragOverId(routine.id);
+              }}
+              onDrop={(e) => {
+                e.preventDefault();
+                if (!draggedId || draggedId === routine.id) return;
+                reorderRoutines(draggedId, routine.id);
+                setDraggedId(null);
+                setDragOverId(null);
+              }}
+              onDragEnd={() => {
+                setDraggedId(null);
+                setDragOverId(null);
+              }}
+            >
               <div className="flex items-start justify-between gap-3">
-                <div className="flex-1 min-w-0">
+                <div className="flex items-start gap-2 flex-1 min-w-0">
+                  {routines.length > 1 && (
+                    <button
+                      type="button"
+                      draggable
+                      aria-label={`Reorder ${routine.name}`}
+                      className="mt-0.5 text-muted-foreground hover:text-foreground transition-colors cursor-grab active:cursor-grabbing touch-none"
+                      data-testid={`button-reorder-${routine.id}`}
+                      onDragStart={(e) => {
+                        e.dataTransfer.effectAllowed = "move";
+                        setDraggedId(routine.id);
+                      }}
+                      onKeyDown={(e) => {
+                        if (e.key === "ArrowUp") {
+                          e.preventDefault();
+                          moveByOffset(routine.id, -1);
+                        } else if (e.key === "ArrowDown") {
+                          e.preventDefault();
+                          moveByOffset(routine.id, 1);
+                        }
+                      }}
+                    >
+                      <GripVertical className="w-4 h-4" />
+                    </button>
+                  )}
+                  <div className="flex-1 min-w-0">
                   <div className="flex items-center gap-2 mb-2">
                     <span className="text-xl">{routine.icon || "✅"}</span>
                     <h3 className="font-semibold truncate" data-testid={`text-routine-name-${routine.id}`}>
@@ -341,6 +417,7 @@ export default function RoutinesPage() {
                       <TimeCategoryBadge key={cat} category={cat} size="sm" />
                     ))}
                   </div>
+                </div>
                 </div>
                 <div className="flex items-center gap-1">
                   <Dialog
