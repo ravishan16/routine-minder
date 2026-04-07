@@ -49,6 +49,13 @@ export default defineConfig({
             url: "/dashboard",
             icons: [{ src: "/icons/icon.svg", sizes: "96x96" }],
           },
+          {
+            name: "Weekly Insights",
+            short_name: "Insights",
+            description: "Review your weekly recap and trends",
+            url: "/insights",
+            icons: [{ src: "/icons/icon.svg", sizes: "96x96" }],
+          },
         ],
         screenshots: [
           {

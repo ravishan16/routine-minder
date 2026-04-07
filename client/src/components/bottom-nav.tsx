@@ -1,11 +1,12 @@
 import { useLocation, Link } from "wouter";
-import { CheckSquare, List, BarChart3, Settings } from "lucide-react";
+import { CheckSquare, List, BarChart3, Settings, Lightbulb } from "lucide-react";
 import { cn } from "@/lib/utils";
 
 const navItems = [
   { path: "/", label: "Today", icon: CheckSquare },
   { path: "/routines", label: "Routines", icon: List },
   { path: "/dashboard", label: "Dashboard", icon: BarChart3 },
+  { path: "/insights", label: "Insights", icon: Lightbulb },
   { path: "/settings", label: "Settings", icon: Settings },
 ];
 

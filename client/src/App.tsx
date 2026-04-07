@@ -11,6 +11,7 @@ import { LandingPage } from "@/components/landing-page";
 import TodayPage from "@/pages/today";
 import RoutinesPage from "@/pages/routines";
 import DashboardPage from "@/pages/dashboard";
+import InsightsPage from "@/pages/insights";
 import SettingsPage from "@/pages/settings";
 import PrivacyPage from "@/pages/privacy";
 import TermsPage from "@/pages/terms";
@@ -27,6 +28,7 @@ function Router() {
       <Route path="/" component={TodayPage} />
       <Route path="/routines" component={RoutinesPage} />
       <Route path="/dashboard" component={DashboardPage} />
+      <Route path="/insights" component={InsightsPage} />
       <Route path="/settings" component={SettingsPage} />
       <Route component={NotFound} />
     </Switch>
