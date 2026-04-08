@@ -10,7 +10,7 @@
     "db:migrate:local": "wrangler d1 execute routine-minder-db --local --file=./migrations/001_init.sql"
   },
   "dependencies": {
-    "hono": "^4.12.7"
+    "hono": "^4.12.12"
   },
   "devDependencies": {
     "@cloudflare/workers-types": "^4.20260310.1",
