@@ -12,7 +12,7 @@
     "db:migrate:all:local": "for f in ./migrations/*.sql; do wrangler d1 execute routine-minder-db --local --file=\"$f\"; done"
   },
   "dependencies": {
-    "hono": "^4.12.7"
+    "hono": "^4.12.14"
   },
   "devDependencies": {
     "@cloudflare/workers-types": "^4.20260310.1",
