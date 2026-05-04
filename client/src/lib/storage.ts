@@ -498,6 +498,91 @@ export function setVisited(): void {
   localStorage.setItem(KEYS.visited, "true");
 }
 
+// ==================== OURA ====================
+
+export type OuraStatus = {
+  enabled: boolean;
+  connected: boolean;
+  lastSyncAt?: string | null;
+};
+
+export type OuraSummary = {
+  connected: boolean;
+  reason?: string;
+  range?: { startDate: string; endDate: string };
+  profile?: { age?: number; biological_sex?: string | null } | null;
+  activity?: Array<Record<string, unknown>>;
+  sleep?: Array<Record<string, unknown>>;
+  metrics?: {
+    avgSteps: number | null;
+    avgActiveCalories: number | null;
+    avgSleepHours: number | null;
+  };
+  latestActivity?: Record<string, unknown> | null;
+  latestSleep?: Record<string, unknown> | null;
+};
+
+export function isOuraEnabledForCurrentUser(): boolean {
+  // Keep gating decision on the server to avoid exposing allow-list values in the client.
+  return isGoogleSignedIn();
+}
+
+export const ouraApi = {
+  getStatus: async (): Promise<OuraStatus> => {
+    const result = await api<OuraStatus>("/api/oura/status");
+    return result || { enabled: false, connected: false };
+  },
+
+  getConnectUrl: async (): Promise<string> => {
+    const result = await api<{ authUrl: string }>("/api/oura/connect-url");
+    if (!result?.authUrl) {
+      throw new Error("Failed to start Oura connection");
+    }
+    return result.authUrl;
+  },
+
+  exchangeCode: async (code: string, state: string): Promise<boolean> => {
+    const result = await api<{ success: boolean }>("/api/oura/exchange", {
+      method: "POST",
+      body: JSON.stringify({ code, state }),
+    });
+    return result?.success === true;
+  },
+
+  disconnect: async (): Promise<boolean> => {
+    const result = await api<{ success: boolean }>("/api/oura/connection", {
+      method: "DELETE",
+    });
+    return result?.success === true;
+  },
+
+  getSummary: async (range?: { startDate?: string; endDate?: string }): Promise<OuraSummary> => {
+    const search = new URLSearchParams();
+    if (range?.startDate && range?.endDate) {
+      search.set("startDate", range.startDate);
+      search.set("endDate", range.endDate);
+    }
+
+    const endpoint = search.toString() ? `/api/oura/summary?${search.toString()}` : "/api/oura/summary";
+    const result = await api<OuraSummary>(endpoint);
+    return result || { connected: false, reason: "Could not load Oura data" };
+  },
+};
+
+// Handles OAuth callback when Oura redirects back to the app URL.
+export async function handleOuraOAuthCallbackFromUrl(): Promise<{ handled: boolean; success: boolean }> {
+  const params = new URLSearchParams(window.location.search);
+  const code = params.get("code");
+  const state = params.get("state");
+
+  if (!code || !state || !state.startsWith("oura_")) {
+    return { handled: false, success: false };
+  }
+
+  const success = await ouraApi.exchangeCode(code, state);
+  return { handled: true, success };
+}
+
 // ==================== GOOGLE AUTH ====================
 
 // Google user type

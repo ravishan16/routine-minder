@@ -66,10 +66,61 @@ The backend handles authentication and data sync. It uses **Cloudflare D1** (SQL
 
 ## Environment Variables
 
-For Google Authentication to work, you need to configure client IDs in the Cloudflare Dashboard (Settings -> Variables) or `wrangler.toml`.
+For auth and integrations, configure variables in the Cloudflare Dashboard (Settings -> Variables / Secrets) or `wrangler.toml`.
 
--   `GOOGLE_CLIENT_ID`
--   `GOOGLE_CLIENT_SECRET` (Backend only)
+-   Worker vars/secrets:
+    - `API_SECRET` (optional, for API key middleware)
+    - `OURA_REDIRECT_URI` (non-secret var)
+    - `OURA_CLIENT_ID` (secret)
+    - `OURA_CLIENT_SECRET` (secret)
+    - `OURA_ALLOWED_EMAIL` (secret)
+-   Frontend build-time vars:
+    - `VITE_API_URL`
+    - `VITE_API_KEY`
+    - `VITE_GOOGLE_CLIENT_ID`
+    - `VITE_VAPID_PUBLIC_KEY`
+
+Set Oura secrets on the worker:
+
+```bash
+cd worker
+npx wrangler secret put OURA_CLIENT_ID
+npx wrangler secret put OURA_CLIENT_SECRET
+npx wrangler secret put OURA_ALLOWED_EMAIL
+```
+
+## Local Oura OAuth Testing
+
+For local testing, add this Redirect URI in your Oura app configuration:
+
+- `http://localhost:5173`
+
+Then run local frontend + local worker with local env:
+
+```bash
+# Terminal 1 (root)
+npm run dev
+
+# Terminal 2 (worker)
+cd worker
+npx wrangler dev --env local
+```
+
+Set your root `.env` for local API calls:
+
+- `VITE_API_URL=http://127.0.0.1:8787`
+
+The worker local environment in `worker/wrangler.toml` uses:
+
+- `OURA_REDIRECT_URI=http://localhost:5173`
+
+So OAuth authorization and token exchange use the same redirect URI in local.
+
+## Oura Dashboard Usage
+
+- Default behavior: the dashboard loads the last 7 days of Oura data.
+- Custom range: choose `Start date` and `End date` in the Oura page.
+- Copy/export: the dashboard provides a markdown table export suitable for pasting into docs or chat.
 
 > [!TIP]
 > **Google Brand Verification**: For detailed instructions on setting up the OAuth Consent Screen, App Logo, and Privacy Policy to get "Verified" status, see the Google Cloud Console documentation on [OAuth consent screen](https://support.google.com/cloud/answer/10311615).
