@@ -24,6 +24,10 @@
     - **Animations**: Micro-interactions and smooth transitions.
     - **Dual Theme**: Refined Light and Dark modes.
 - **🔒 Privacy Focused**: All data stored locally in your browser (IndexedDB/LocalStorage). Optional Google Sync for cross-device backup.
+- **⌚ Oura Integration (Allowlisted)**:
+    - Connect your Oura account and view activity/sleep summaries.
+    - Default last-7-days view with custom date range selection.
+    - One-click markdown table export for sharing.
 
 ## 🚀 Tech Stack
 

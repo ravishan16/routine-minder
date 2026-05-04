@@ -11,12 +11,13 @@ import { LandingPage } from "@/components/landing-page";
 import TodayPage from "@/pages/today";
 import RoutinesPage from "@/pages/routines";
 import DashboardPage from "@/pages/dashboard";
+import OuraDashboardPage from "@/pages/oura-dashboard";
 import SettingsPage from "@/pages/settings";
 import PrivacyPage from "@/pages/privacy";
 import TermsPage from "@/pages/terms";
 import AboutPage from "@/pages/about";
 import NotFound from "@/pages/not-found";
-import { initAuth, startBackgroundSync, hasVisited, setVisited } from "@/lib/storage";
+import { initAuth, startBackgroundSync, hasVisited, setVisited, handleOuraOAuthCallbackFromUrl } from "@/lib/storage";
 
 // Public pages that don't require auth
 const PUBLIC_ROUTES = ["/privacy", "/terms", "/about"];
@@ -27,6 +28,7 @@ function Router() {
       <Route path="/" component={TodayPage} />
       <Route path="/routines" component={RoutinesPage} />
       <Route path="/dashboard" component={DashboardPage} />
+      <Route path="/oura" component={OuraDashboardPage} />
       <Route path="/settings" component={SettingsPage} />
       <Route component={NotFound} />
     </Switch>
@@ -79,7 +81,13 @@ function App() {
 
   useEffect(() => {
     // Initialize auth and start background sync
-    initAuth().then(() => {
+    initAuth().then(async () => {
+      const oauthResult = await handleOuraOAuthCallbackFromUrl();
+      if (oauthResult.handled) {
+        window.location.href = oauthResult.success ? "/oura?connected=1" : "/oura?connected=0";
+        return;
+      }
+
       setIsReady(true);
       startBackgroundSync();
     });

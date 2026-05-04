@@ -1,6 +1,7 @@
 import { useLocation, Link } from "wouter";
-import { CheckSquare, List, BarChart3, Settings } from "lucide-react";
+import { CheckSquare, List, BarChart3, Settings, HeartPulse } from "lucide-react";
 import { cn } from "@/lib/utils";
+import { isOuraEnabledForCurrentUser } from "@/lib/storage";
 
 const navItems = [
   { path: "/", label: "Today", icon: CheckSquare },
@@ -11,11 +12,16 @@ const navItems = [
 
 export function BottomNav() {
   const [location] = useLocation();
+  const showOura = isOuraEnabledForCurrentUser();
+
+  const items = showOura
+    ? [...navItems.slice(0, 3), { path: "/oura", label: "Oura", icon: HeartPulse }, ...navItems.slice(3)]
+    : navItems;
 
   return (
     <nav className="fixed bottom-0 left-0 right-0 bg-background/80 backdrop-blur-[12px] safe-area-inset-bottom z-50">
       <div className="flex items-center justify-around h-16 max-w-lg mx-auto px-2">
-        {navItems.map(({ path, label, icon: Icon }) => {
+        {items.map(({ path, label, icon: Icon }) => {
           const isActive = location === path;
           return (
             <Link key={path} href={path}>
