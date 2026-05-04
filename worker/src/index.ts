@@ -505,6 +505,36 @@ app.get('/api/oura/summary', async (c) => {
   const activity = await activityRes.json<any>();
   const sleep = await sleepRes.json<any>();
 
+  const optionalCollectionPaths = [
+    'daily_spo2',
+    'daily_readiness',
+    'daily_stress',
+    'daily_resilience',
+    'daily_cardiovascular_age',
+    'vO2_max',
+    'workout',
+    'session',
+  ] as const;
+
+  const optionalResponses = await Promise.all(
+    optionalCollectionPaths.map(async (path) => {
+      try {
+        const res = await fetch(`${OURA_API_BASE}/${path}?start_date=${startDate}&end_date=${endDate}`, { headers });
+        if (!res.ok) {
+          return [path, []] as const;
+        }
+
+        const payload = await res.json<any>();
+        const items = Array.isArray(payload?.data) ? payload.data : [];
+        return [path, items] as const;
+      } catch {
+        return [path, []] as const;
+      }
+    })
+  );
+
+  const optionalCollections = Object.fromEntries(optionalResponses) as Record<string, Array<Record<string, unknown>>>;
+
   const activityItems = Array.isArray(activity?.data) ? activity.data : [];
   const sleepItems = Array.isArray(sleep?.data) ? sleep.data : [];
 
@@ -530,6 +560,14 @@ app.get('/api/oura/summary', async (c) => {
     profile: profile?.data || null,
     activity: activityItems,
     sleep: sleepItems,
+    spo2: optionalCollections.daily_spo2 || [],
+    readiness: optionalCollections.daily_readiness || [],
+    stress: optionalCollections.daily_stress || [],
+    resilience: optionalCollections.daily_resilience || [],
+    cardiovascularAge: optionalCollections.daily_cardiovascular_age || [],
+    vo2Max: optionalCollections.vO2_max || [],
+    workout: optionalCollections.workout || [],
+    session: optionalCollections.session || [],
     metrics: {
       avgSteps,
       avgActiveCalories,

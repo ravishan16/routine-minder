@@ -25,73 +25,242 @@ function escapeMdCell(value: unknown): string {
     .trim();
 }
 
-function buildMarkdownTable(summary: OuraSummary): string {
-  const sections: string[] = [];
+function getPathValue(row: Record<string, unknown>, path: string): unknown {
+  return path.split(".").reduce<unknown>((acc, key) => {
+    if (acc === null || acc === undefined || typeof acc !== "object") return undefined;
+    return (acc as Record<string, unknown>)[key];
+  }, row);
+}
 
-  sections.push("# Oura Export");
-  sections.push("");
-  sections.push("## Date Range");
-  sections.push("| Field | Value |");
-  sections.push("| --- | --- |");
-  sections.push(`| Start Date | ${escapeMdCell(summary.range?.startDate || "-")} |`);
-  sections.push(`| End Date | ${escapeMdCell(summary.range?.endDate || "-")} |`);
+function asNumber(value: unknown): number | null {
+  return typeof value === "number" && Number.isFinite(value) ? value : null;
+}
 
-  sections.push("");
-  sections.push("## Metrics");
-  sections.push("| Metric | Value |");
-  sections.push("| --- | --- |");
-  sections.push(`| Avg Steps | ${escapeMdCell(summary.metrics?.avgSteps ?? "-")} |`);
-  sections.push(`| Avg Active Calories | ${escapeMdCell(summary.metrics?.avgActiveCalories ?? "-")} |`);
-  sections.push(`| Avg Sleep Hours | ${escapeMdCell(summary.metrics?.avgSleepHours ?? "-")} |`);
+function asString(value: unknown): string | null {
+  return typeof value === "string" && value.length > 0 ? value : null;
+}
 
-  sections.push("");
-  sections.push("## Profile");
-  sections.push("| Field | Value |");
-  sections.push("| --- | --- |");
+function getDayFromRow(row: Record<string, unknown>): string | null {
+  const directDay = asString(row.day) || asString(row.start_day) || asString(row.date);
+  if (directDay) return directDay;
 
-  const profileEntries = Object.entries(summary.profile || {});
-  if (profileEntries.length === 0) {
-    sections.push("| - | - |");
-  } else {
-    for (const [key, value] of profileEntries) {
-      sections.push(`| ${escapeMdCell(key)} | ${escapeMdCell(value)} |`);
-    }
+  const startDateTime = asString(row.start_datetime);
+  if (startDateTime && startDateTime.length >= 10) {
+    return startDateTime.slice(0, 10);
   }
 
-  sections.push("");
-  sections.push("## Daily Activity");
-  sections.push("| Day | Steps | Active Calories | Raw JSON |");
-  sections.push("| --- | --- | --- | --- |");
+  return null;
+}
+
+function buildMarkdownTable(summary: OuraSummary): string {
+  const rowsByDay = new Map<string, Record<string, string | number>>();
+  const ensureRow = (day: string) => {
+    if (!rowsByDay.has(day)) {
+      rowsByDay.set(day, { Date: day });
+    }
+    return rowsByDay.get(day)!;
+  };
+
+  const incrementField = (row: Record<string, string | number>, key: string, value: number) => {
+    const current = typeof row[key] === "number" ? (row[key] as number) : 0;
+    row[key] = current + value;
+  };
 
   const activityRows = Array.isArray(summary.activity) ? summary.activity : [];
-  if (activityRows.length === 0) {
-    sections.push("| - | - | - | - |");
-  } else {
-    for (const row of activityRows) {
-      const day = typeof row.day === "string" ? row.day : "-";
-      const steps = typeof row.steps === "number" ? row.steps : "-";
-      const activeCalories = typeof row.active_calories === "number" ? row.active_calories : "-";
-      sections.push(`| ${escapeMdCell(day)} | ${escapeMdCell(steps)} | ${escapeMdCell(activeCalories)} | ${escapeMdCell(JSON.stringify(row))} |`);
-    }
-  }
+  for (const row of activityRows) {
+    const day = asString(row.day);
+    if (!day) continue;
+    const out = ensureRow(day);
 
-  sections.push("");
-  sections.push("## Daily Sleep");
-  sections.push("| Day | Total Sleep Duration (sec) | Raw JSON |");
-  sections.push("| --- | --- | --- |");
+    const steps = asNumber(row.steps);
+    if (steps !== null) out.Steps = steps;
+
+    const activeCalories = asNumber(row.active_calories);
+    if (activeCalories !== null) out.Active_Calories = activeCalories;
+
+    const activityScore = asNumber(row.score);
+    if (activityScore !== null) out.Activity_Score = activityScore;
+
+    const stayActive = asNumber(getPathValue(row, "contributors.stay_active"));
+    if (stayActive !== null) out.Stay_Active_Score = stayActive;
+
+    const moveHourly = asNumber(getPathValue(row, "contributors.move_every_hour"));
+    if (moveHourly !== null) out.Move_Hourly_Score = moveHourly;
+
+    const trainingVolume = asNumber(getPathValue(row, "contributors.training_volume"));
+    if (trainingVolume !== null) out.Training_Volume_Score = trainingVolume;
+  }
 
   const sleepRows = Array.isArray(summary.sleep) ? summary.sleep : [];
-  if (sleepRows.length === 0) {
-    sections.push("| - | - | - |");
-  } else {
-    for (const row of sleepRows) {
-      const day = typeof row.day === "string" ? row.day : "-";
-      const totalSleep = typeof row.total_sleep_duration === "number" ? row.total_sleep_duration : "-";
-      sections.push(`| ${escapeMdCell(day)} | ${escapeMdCell(totalSleep)} | ${escapeMdCell(JSON.stringify(row))} |`);
+  for (const row of sleepRows) {
+    const day = asString(row.day);
+    if (!day) continue;
+    const out = ensureRow(day);
+
+    const sleepScore = asNumber(row.score);
+    if (sleepScore !== null) out.Sleep_Score = sleepScore;
+
+    const deepSleep = asNumber(getPathValue(row, "contributors.deep_sleep"));
+    if (deepSleep !== null) out.Deep_Sleep_Score = deepSleep;
+
+    const remSleep = asNumber(getPathValue(row, "contributors.rem_sleep"));
+    if (remSleep !== null) out.REM_Sleep_Score = remSleep;
+
+    const sleepEfficiency = asNumber(getPathValue(row, "contributors.efficiency"));
+    if (sleepEfficiency !== null) out.Sleep_Efficiency = sleepEfficiency;
+
+    const totalSleepDuration = asNumber(row.total_sleep_duration);
+    if (totalSleepDuration !== null) out.Total_Sleep_Duration_Sec = totalSleepDuration;
+  }
+
+  const readinessRows = Array.isArray(summary.readiness) ? summary.readiness : [];
+  for (const row of readinessRows) {
+    const day = asString(row.day);
+    if (!day) continue;
+    const out = ensureRow(day);
+
+    const readinessScore = asNumber(row.score);
+    if (readinessScore !== null) out.Readiness_Score = readinessScore;
+
+    const readinessActivityBalance = asNumber(getPathValue(row, "contributors.activity_balance"));
+    if (readinessActivityBalance !== null) out.Readiness_Activity_Balance = readinessActivityBalance;
+  }
+
+  const spo2Rows = Array.isArray(summary.spo2) ? summary.spo2 : [];
+  for (const row of spo2Rows) {
+    const day = asString(row.day);
+    if (!day) continue;
+    const out = ensureRow(day);
+
+    const spo2Average = asNumber(getPathValue(row, "spo2_percentage.average"));
+    if (spo2Average !== null) out.SpO2_Average = spo2Average;
+  }
+
+  const stressRows = Array.isArray(summary.stress) ? summary.stress : [];
+  for (const row of stressRows) {
+    const day = asString(row.day);
+    if (!day) continue;
+    const out = ensureRow(day);
+
+    const stressHigh = asNumber(row.stress_high_duration);
+    if (stressHigh !== null) out.Stress_High_Duration = stressHigh;
+  }
+
+  const resilienceRows = Array.isArray(summary.resilience) ? summary.resilience : [];
+  for (const row of resilienceRows) {
+    const day = asString(row.day);
+    if (!day) continue;
+    const out = ensureRow(day);
+
+    const resilienceLevel = asString(row.level);
+    if (resilienceLevel) out.Resilience_Level = resilienceLevel;
+  }
+
+  const cardioRows = Array.isArray(summary.cardiovascularAge) ? summary.cardiovascularAge : [];
+  for (const row of cardioRows) {
+    const day = asString(row.day);
+    if (!day) continue;
+    const out = ensureRow(day);
+
+    const cardioAge = asNumber(row.cardiovascular_age);
+    if (cardioAge !== null) out.Cardiovascular_Age = cardioAge;
+  }
+
+  const vo2Rows = Array.isArray(summary.vo2Max) ? summary.vo2Max : [];
+  for (const row of vo2Rows) {
+    const day = asString(row.day);
+    if (!day) continue;
+    const out = ensureRow(day);
+
+    const vo2 = asNumber(row.vo2_max);
+    if (vo2 !== null) out.VO2_Max = vo2;
+  }
+
+  const workoutRows = Array.isArray(summary.workout) ? summary.workout : [];
+  for (const row of workoutRows) {
+    const day = getDayFromRow(row);
+    if (!day) continue;
+    const out = ensureRow(day);
+
+    incrementField(out, "Workout_Count", 1);
+
+    const workoutDuration = asNumber(row.duration);
+    if (workoutDuration !== null) {
+      incrementField(out, "Workout_Duration_Min", workoutDuration);
+    }
+
+    const workoutCalories = asNumber(row.calories) ?? asNumber(row.total_calories);
+    if (workoutCalories !== null) {
+      incrementField(out, "Workout_Calories", workoutCalories);
     }
   }
 
-  return sections.join("\n");
+  const sessionRows = Array.isArray(summary.session) ? summary.session : [];
+  for (const row of sessionRows) {
+    const day = getDayFromRow(row);
+    if (!day) continue;
+    const out = ensureRow(day);
+
+    incrementField(out, "Session_Count", 1);
+
+    const sessionScore = asNumber(row.score);
+    if (sessionScore !== null) {
+      out.Session_Score = sessionScore;
+    }
+
+    const sessionType = asString(row.type);
+    if (sessionType) {
+      out.Session_Type = sessionType;
+    }
+  }
+
+  const columns = [
+    "Date",
+    "Steps",
+    "Active_Calories",
+    "Activity_Score",
+    "Sleep_Score",
+    "Deep_Sleep_Score",
+    "REM_Sleep_Score",
+    "Sleep_Efficiency",
+    "Total_Sleep_Duration_Sec",
+    "Stay_Active_Score",
+    "Move_Hourly_Score",
+    "Training_Volume_Score",
+    "Readiness_Score",
+    "Readiness_Activity_Balance",
+    "SpO2_Average",
+    "Stress_High_Duration",
+    "Resilience_Level",
+    "Cardiovascular_Age",
+    "VO2_Max",
+    "Workout_Count",
+    "Workout_Duration_Min",
+    "Workout_Calories",
+    "Session_Count",
+    "Session_Score",
+    "Session_Type",
+  ] as const;
+
+  const sortedRows = Array.from(rowsByDay.values()).sort((a, b) => String(a.Date).localeCompare(String(b.Date)));
+  const lines: string[] = [];
+  lines.push("# Oura Export");
+  lines.push("");
+  lines.push(`Range: ${summary.range?.startDate ?? "-"} to ${summary.range?.endDate ?? "-"}`);
+  lines.push("");
+  lines.push("| " + columns.join(" | ") + " |");
+  lines.push("| " + columns.map(() => "---").join(" | ") + " |");
+
+  if (sortedRows.length === 0) {
+    lines.push("| " + columns.map(() => "-").join(" | ") + " |");
+  } else {
+    for (const row of sortedRows) {
+      const values = columns.map((column) => escapeMdCell(row[column] ?? "-"));
+      lines.push(`| ${values.join(" | ")} |`);
+    }
+  }
+
+  return lines.join("\n");
 }
 
 export default function OuraDashboardPage() {
@@ -295,7 +464,7 @@ export default function OuraDashboardPage() {
               </Button>
             </div>
             <p className="text-xs text-muted-foreground">
-              Full profile, activity, and sleep data in markdown table format for the selected window.
+              Flattened per-day markdown table with key activity, sleep, readiness, SpO2, stress, resilience, cardiovascular age, and VO2 max metrics.
             </p>
             <pre className="max-h-64 overflow-auto rounded-md border bg-muted/30 p-3 text-xs leading-relaxed">
               {markdownTableData || "No Oura data loaded yet."}
