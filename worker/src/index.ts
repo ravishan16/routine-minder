@@ -512,6 +512,8 @@ app.get('/api/oura/summary', async (c) => {
     'daily_resilience',
     'daily_cardiovascular_age',
     'vO2_max',
+    'workout',
+    'session',
   ] as const;
 
   const optionalResponses = await Promise.all(
@@ -564,6 +566,8 @@ app.get('/api/oura/summary', async (c) => {
     resilience: optionalCollections.daily_resilience || [],
     cardiovascularAge: optionalCollections.daily_cardiovascular_age || [],
     vo2Max: optionalCollections.vO2_max || [],
+    workout: optionalCollections.workout || [],
+    session: optionalCollections.session || [],
     metrics: {
       avgSteps,
       avgActiveCalories,

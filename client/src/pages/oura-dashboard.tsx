@@ -40,6 +40,18 @@ function asString(value: unknown): string | null {
   return typeof value === "string" && value.length > 0 ? value : null;
 }
 
+function getDayFromRow(row: Record<string, unknown>): string | null {
+  const directDay = asString(row.day) || asString(row.start_day) || asString(row.date);
+  if (directDay) return directDay;
+
+  const startDateTime = asString(row.start_datetime);
+  if (startDateTime && startDateTime.length >= 10) {
+    return startDateTime.slice(0, 10);
+  }
+
+  return null;
+}
+
 function buildMarkdownTable(summary: OuraSummary): string {
   const rowsByDay = new Map<string, Record<string, string | number>>();
   const ensureRow = (day: string) => {
@@ -47,6 +59,11 @@ function buildMarkdownTable(summary: OuraSummary): string {
       rowsByDay.set(day, { Date: day });
     }
     return rowsByDay.get(day)!;
+  };
+
+  const incrementField = (row: Record<string, string | number>, key: string, value: number) => {
+    const current = typeof row[key] === "number" ? (row[key] as number) : 0;
+    row[key] = current + value;
   };
 
   const activityRows = Array.isArray(summary.activity) ? summary.activity : [];
@@ -159,6 +176,44 @@ function buildMarkdownTable(summary: OuraSummary): string {
     if (vo2 !== null) out.VO2_Max = vo2;
   }
 
+  const workoutRows = Array.isArray(summary.workout) ? summary.workout : [];
+  for (const row of workoutRows) {
+    const day = getDayFromRow(row);
+    if (!day) continue;
+    const out = ensureRow(day);
+
+    incrementField(out, "Workout_Count", 1);
+
+    const workoutDuration = asNumber(row.duration);
+    if (workoutDuration !== null) {
+      incrementField(out, "Workout_Duration_Min", workoutDuration);
+    }
+
+    const workoutCalories = asNumber(row.calories) ?? asNumber(row.total_calories);
+    if (workoutCalories !== null) {
+      incrementField(out, "Workout_Calories", workoutCalories);
+    }
+  }
+
+  const sessionRows = Array.isArray(summary.session) ? summary.session : [];
+  for (const row of sessionRows) {
+    const day = getDayFromRow(row);
+    if (!day) continue;
+    const out = ensureRow(day);
+
+    incrementField(out, "Session_Count", 1);
+
+    const sessionScore = asNumber(row.score);
+    if (sessionScore !== null) {
+      out.Session_Score = sessionScore;
+    }
+
+    const sessionType = asString(row.type);
+    if (sessionType) {
+      out.Session_Type = sessionType;
+    }
+  }
+
   const columns = [
     "Date",
     "Steps",
@@ -179,6 +234,12 @@ function buildMarkdownTable(summary: OuraSummary): string {
     "Resilience_Level",
     "Cardiovascular_Age",
     "VO2_Max",
+    "Workout_Count",
+    "Workout_Duration_Min",
+    "Workout_Calories",
+    "Session_Count",
+    "Session_Score",
+    "Session_Type",
   ] as const;
 
   const sortedRows = Array.from(rowsByDay.values()).sort((a, b) => String(a.Date).localeCompare(String(b.Date)));

@@ -519,6 +519,8 @@ export type OuraSummary = {
   resilience?: Array<Record<string, unknown>>;
   cardiovascularAge?: Array<Record<string, unknown>>;
   vo2Max?: Array<Record<string, unknown>>;
+  workout?: Array<Record<string, unknown>>;
+  session?: Array<Record<string, unknown>>;
   metrics?: {
     avgSteps: number | null;
     avgActiveCalories: number | null;
