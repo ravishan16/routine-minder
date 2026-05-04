@@ -513,6 +513,12 @@ export type OuraSummary = {
   profile?: { age?: number; biological_sex?: string | null } | null;
   activity?: Array<Record<string, unknown>>;
   sleep?: Array<Record<string, unknown>>;
+  spo2?: Array<Record<string, unknown>>;
+  readiness?: Array<Record<string, unknown>>;
+  stress?: Array<Record<string, unknown>>;
+  resilience?: Array<Record<string, unknown>>;
+  cardiovascularAge?: Array<Record<string, unknown>>;
+  vo2Max?: Array<Record<string, unknown>>;
   metrics?: {
     avgSteps: number | null;
     avgActiveCalories: number | null;
